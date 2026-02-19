@@ -10,6 +10,14 @@ type SortModel struct {
 	style lipgloss.Style
 }
 
+func (m SortModel) selectView() {
+	m.style = m.style.BorderForeground(lipgloss.Color("#6E3F00"))
+}
+
+func (m SortModel) deselectView() {
+	m.style = m.style.BorderForeground(lipgloss.Color("#6E3F00"))
+}
+
 func InitialSort(height int) SortModel {
 	return SortModel{
 		text: "Sort",

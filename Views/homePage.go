@@ -19,13 +19,19 @@ var (
 // columns []table.Column
 )
 
+//type ViewModel interface {
+//	selectView()
+//	deselectView()
+//}
+
 type HomeModel struct {
-	cursor       int
-	currPartials []string
-	listModel    partials.ListModel
-	addModel     partials.AddModel
-	filterModel  partials.FilterModel
-	sortModel    partials.SortModel
+	sidebarCursor int
+	mainCursor    int
+	sidebarViews  []partials.ViewModel
+	listModel     partials.ListModel
+	addModel      partials.AddModel
+	filterModel   partials.FilterModel
+	sortModel     partials.SortModel
 }
 
 func InitialHome(width int, height int) HomeModel {
@@ -41,21 +47,28 @@ func InitialHome(width int, height int) HomeModel {
 		{"One Battle After Another", "Movie, Live Action", "Pending", "Action"},
 	}
 
+	list := partials.InitialList(width, height, columns, rows)
+	add := partials.InitialAdd() // height = 1 Note: I think each side of the border adds ~1.5
+	filter := partials.InitialFilter(height - (10))
+	sort := partials.InitialSort(3)
+
+	sidebarList := make([]partials.ViewModel, 3)
+	sidebarList[0] = add
+	sidebarList[1] = filter
+	sidebarList[2] = sort
+
 	return HomeModel{
-		currPartials: make([]string, 2),
-		listModel:    partials.InitialList(width, height, columns, rows),
-		addModel:     partials.InitialAdd(), // height = 1 Note: I think each side of the border adds ~1.5
-		filterModel:  partials.InitialFilter(height - (10)),
-		sortModel:    partials.InitialSort(3),
-		cursor:       0,
+		sidebarViews:  sidebarList,
+		listModel:     list,
+		addModel:      add,
+		filterModel:   filter,
+		sortModel:     sort,
+		sidebarCursor: 0,
+		mainCursor:    0,
 	}
 }
 
 func (m HomeModel) Init() tea.Cmd {
-	m.currPartials[0] = "add"
-	m.currPartials[1] = "filter"
-	m.currPartials[2] = "sort"
-	m.currPartials[3] = "list"
 	return nil
 }
 
@@ -75,21 +88,43 @@ func (m HomeModel) Update(msg tea.Msg) (HomeModel, tea.Cmd) {
 			return m, tea.Quit
 
 		case "K":
-			cmds = append(cmds, cmd)
-			m.listModel, cmd = m.listModel.Update(msg)
-			cmds = append(cmds, cmd)
-			if m.cursor > 0 {
-				m.cursor--
+			if m.mainCursor == 0 {
+				cmds = append(cmds, cmd)
+				m.listModel, cmd = m.listModel.Update(msg)
+				cmds = append(cmds, cmd)
+				if m.sidebarCursor > 0 {
+					m.sidebarCursor--
+				}
 			}
 		case "J":
+			if m.mainCursor == 0 {
+				cmds = append(cmds, cmd)
+				m.listModel, cmd = m.listModel.Update(msg)
+				cmds = append(cmds, cmd)
+				if m.sidebarCursor < len(m.sidebarViews) {
+					m.sidebarCursor++
+				}
+			}
+		case "H":
+			if m.mainCursor > 0 {
+				m.mainCursor--
+				m.listModel, cmd = m.listModel.Update(msg)
+			}
 			cmds = append(cmds, cmd)
 			m.listModel, cmd = m.listModel.Update(msg)
 			cmds = append(cmds, cmd)
-			if m.cursor < len(m.currPartials) {
-				m.cursor++
+			if m.mainCursor < 1 {
+				m.sidebarCursor++
+			}
+		case "L":
+			cmds = append(cmds, cmd)
+			m.listModel, cmd = m.listModel.Update(msg)
+			cmds = append(cmds, cmd)
+			if m.sidebarCursor < len(m.sidebarViews) {
+				m.sidebarCursor++
 			}
 		case "j", "k", "up", "down":
-			if m.currPartials[m.cursor] == "list" {
+			if m.mainCursor == 1 {
 				m.listModel, cmd = m.listModel.Update(msg)
 			}
 			cmds = append(cmds, cmd)

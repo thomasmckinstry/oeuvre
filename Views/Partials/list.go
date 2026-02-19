@@ -7,8 +7,16 @@ import (
 )
 
 type ListModel struct {
-	Style lipgloss.Style // TODO: This probably shouldn't be public
+	style lipgloss.Style // TODO: This probably shouldn't be public
 	table table.Model
+}
+
+func (m ListModel) selectView() {
+	m.style = m.style.BorderForeground(lipgloss.Color("#6E3F00"))
+}
+
+func (m ListModel) deselectView() {
+	m.style = m.style.BorderForeground(lipgloss.Color("#6E3F00"))
 }
 
 func InitialList(width int, height int, cols []table.Column, rows []table.Row) ListModel {
@@ -32,7 +40,7 @@ func InitialList(width int, height int, cols []table.Column, rows []table.Row) L
 	t.SetStyles(s)
 
 	return ListModel{
-		Style: lipgloss.NewStyle().
+		style: lipgloss.NewStyle().
 			BorderStyle(lipgloss.NormalBorder()).
 			BorderLeft(true).
 			BorderForeground(lipgloss.Color("#6E3F00")).
@@ -51,7 +59,7 @@ func (m ListModel) Update(msg tea.Msg) (ListModel, tea.Cmd) {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
-		m.Style = m.Style.Height(msg.Height).Width(msg.Width - (20 + 2))
+		m.style = m.style.Height(msg.Height).Width(msg.Width - (20 + 2))
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "esc":
@@ -61,9 +69,9 @@ func (m ListModel) Update(msg tea.Msg) (ListModel, tea.Cmd) {
 				m.table.Focus()
 			}
 		case "J":
-			m.Style = m.Style.BorderForeground(lipgloss.Color("#D17600"))
+			m.style = m.style.BorderForeground(lipgloss.Color("#D17600"))
 		case "K":
-			m.Style = m.Style.BorderForeground(lipgloss.Color("#6E3F00"))
+			m.style = m.style.BorderForeground(lipgloss.Color("#6E3F00"))
 		}
 	}
 	m.table, cmd = m.table.Update(msg)
@@ -71,5 +79,5 @@ func (m ListModel) Update(msg tea.Msg) (ListModel, tea.Cmd) {
 }
 
 func (m ListModel) View() string {
-	return m.Style.Render(m.table.View())
+	return m.style.Render(m.table.View())
 }

@@ -10,6 +10,14 @@ type FilterModel struct {
 	style lipgloss.Style
 }
 
+func (m FilterModel) selectView() {
+	m.style = m.style.BorderForeground(lipgloss.Color("#6E3F00"))
+}
+
+func (m FilterModel) deselectView() {
+	m.style = m.style.BorderForeground(lipgloss.Color("#6E3F00"))
+}
+
 func InitialFilter(height int) FilterModel {
 	return FilterModel{
 		text: "Filter",

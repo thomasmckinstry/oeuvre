@@ -10,6 +10,14 @@ type AddModel struct {
 	style lipgloss.Style
 }
 
+func (m AddModel) selectView() {
+	m.style = m.style.BorderForeground(lipgloss.Color("#6E3F00"))
+}
+
+func (m AddModel) deselectView() {
+	m.style = m.style.BorderForeground(lipgloss.Color("#6E3F00"))
+}
+
 func InitialAdd() AddModel {
 	return AddModel{
 		text: "Add",

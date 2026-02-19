@@ -18,7 +18,7 @@ type Border struct {
 
 var (
 	thinBorder = Border{
-		Top:          "─",
+		Top:          "──",
 		Bottom:       "─",
 		Left:         "│",
 		Right:        "│",
