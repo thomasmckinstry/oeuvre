@@ -34,9 +34,11 @@ func InitialList(width int, height int, cols []table.Column, rows []table.Row) L
 	return ListModel{
 		Style: lipgloss.NewStyle().
 			BorderStyle(lipgloss.NormalBorder()).
+			BorderLeft(true).
 			BorderForeground(lipgloss.Color("#6E3F00")).
-			Width(width - 2).
-			Height(height - 5),
+			PaddingTop(1).
+			Width(width).
+			Height(height),
 		table: t,
 	}
 }
@@ -49,7 +51,7 @@ func (m ListModel) Update(msg tea.Msg) (ListModel, tea.Cmd) {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
-		m.Style = m.Style.Height(msg.Height - 5).Width(msg.Width - 2)
+		m.Style = m.Style.Height(msg.Height).Width(msg.Width - (20 + 2))
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "esc":

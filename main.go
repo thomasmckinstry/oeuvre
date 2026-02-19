@@ -85,7 +85,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m model) View() string {
 	s := ""
 	s += m.homeModel.View()
-	s += "test"
 
 	// Send the UI for rendering
 	return s
