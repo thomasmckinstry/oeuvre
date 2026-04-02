@@ -1,7 +1,6 @@
 package partials
 
 import (
-	"charm.land/bubbles/v2/textinput"
 	"charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 	"github.com/thomasmckinstry/Bubbletea-Tutorial/Views/Components"
@@ -13,9 +12,10 @@ import (
 type FilterModel struct {
 	headerText     string
 	titleInput     tea.Model
-	genreInput     textinput.Model
-	themeInput     textinput.Model // TODO: These need additional displays for previous entries
+	genreInput     tea.Model
+	themeInput     tea.Model // TODO: These need additional displays for previous entries
 	selected       bool
+	focused        bool
 	cursor         int
 	forms          []tea.Model // Can I get this to use pointers to the actual models? I think right now I'm copying them
 	status         []string
@@ -37,27 +37,12 @@ func (m FilterModel) toggleBorder() lipgloss.Style {
 }
 
 func InitialFilter(height int) FilterModel {
-	/*titleInput := textinput.New()
-	// TODO: I should probably have this colored differently or something to show that it's input instead of a descriptor
-	// Also make it spaced properly so it's always taking up all the width of the column
-	titleInput.Placeholder = "title"
-	titleInput.CharLimit = 64
-	titleInput.SetWidth(14)
-	//titleInput.Blur()*/
-	titleInput := components.InitialInput(3, "title", "Title", 14)
-
-	genreInput := textinput.New()
-	// TODO: I should probably have this colored differently or something to show that it's input instead of a descriptor
-	// Also make it spaced properly so it's always taking up all the width of the column
-	genreInput.Placeholder = "genre"
-	genreInput.ShowSuggestions = true
-	genreInput.SetSuggestions([]string{"Fantasy", "Drama"}) // TODO: Suggestions will be subbed in with an array of every work.
-	genreInput.CharLimit = 64
-	genreInput.SetWidth(14)
-	//genreInput.Blur()
+	titleInput := components.InitialInput(3, "title", "Title", 14, true)
+	genreInput := components.InitialInput(3, "genre", "Genre", 14, false)
+	themeInput := components.InitialInput(3, "theme", "Theme", 14, false)
 
 	//status := []string{"Completed", "In Progress", "Started", "Pending", "Dropped"}
-	forms := []tea.Model{titleInput} // TODO: Figure out how to have null pointers to each form
+	forms := []tea.Model{titleInput, genreInput, themeInput} // TODO: Figure out how to have null pointers to each form
 	// forms is an array of all the forms that make up the filter box.
 	// This is so I can index into each one as I navigate with the keyboard
 
@@ -66,6 +51,7 @@ func InitialFilter(height int) FilterModel {
 		titleInput: titleInput,
 		genreInput: genreInput,
 		selected:   false,
+		focused:    false,
 		cursor:     0,
 		forms:      forms,
 		style: lipgloss.NewStyle().
@@ -98,26 +84,36 @@ func (m FilterModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.style = m.style.Height(msg.Height - (9))
 	case tea.KeyMsg:
 		switch msg.String() {
-		case "esc", "enter":
+		case "enter":
 			m.forms[m.cursor], cmd = m.forms[m.cursor].Update(msg)
+			m.focused = true
+		case "esc":
+			m.forms[m.cursor], cmd = m.forms[m.cursor].Update(msg)
+			m.focused = false
 		case "L", "H", "J", "K":
 			m.style = m.toggleBorder()
 			m.selected = !m.selected
 		case "j", "down": // TODO: Make these check for focused inputs before moving the cursor
-			if m.cursor < len(m.forms)-1 {
+			m.forms[m.cursor], cmd = m.forms[m.cursor].Update(msg)
+			if m.cursor < len(m.forms)-1 && !m.focused {
 				m.cursor++
 			}
+			m.forms[m.cursor], cmd = m.forms[m.cursor].Update(msg)
 		case "k", "up":
-			if m.cursor > 0 {
+			m.forms[m.cursor], cmd = m.forms[m.cursor].Update(msg)
+			if m.cursor > 0 && !m.focused {
 				m.cursor--
 			}
+			m.forms[m.cursor], cmd = m.forms[m.cursor].Update(msg)
 		default:
 			/*if field, ok := m.forms[m.cursor].(textinput.Model); ok {
 				if field.Focused() {
 					m.forms[m.cursor], cmd = field.Update(msg)
 				}
 			}*/
-			m.forms[m.cursor], cmd = m.forms[m.cursor].Update(msg)
+			if m.focused {
+				m.forms[m.cursor], cmd = m.forms[m.cursor].Update(msg)
+			}
 		}
 	}
 	return m, cmd
@@ -128,22 +124,12 @@ func (m FilterModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m FilterModel) View() tea.View {
 	//header:
 	s := m.headerStyle.Render(m.headerText)
-	// Text Input (Title):
-	//if field, ok := m.forms[0].(textinput.Model); ok {
-	//	titleInput := textinput.Model(field)
-	s = lipgloss.JoinVertical(lipgloss.Center, s, m.textinputStyle.Render(m.forms[m.cursor].View().Content))
-	//}
 
-	//Genres (text -> tags):
-	/*if field, ok := m.forms[1].(textinput.Model); ok {
-		genreInput := textinput.Model(field)
-		s = lipgloss.JoinVertical(lipgloss.Center, s, m.textinputStyle.Render(genreInput.View()))
-	}*/
-	// Status (Checkboxes):
+	for _, form := range m.forms {
+		s = lipgloss.JoinVertical(lipgloss.Left, s, m.textinputStyle.Render(form.View().Content))
+	}
 
-	//Themes (text -> tags):
-
-	s = lipgloss.JoinVertical(lipgloss.Center, s, m.errorMsg)
+	//s = lipgloss.JoinVertical(lipgloss.Left, s, m.errorMsg)
 	v := tea.NewView(m.style.Render(s))
 	return v
 }
