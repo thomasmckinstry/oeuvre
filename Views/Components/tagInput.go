@@ -29,7 +29,7 @@ func InitialInput(tagCnt int, placeholder string, title string, width int, selec
 
 	input := textinput.New()
 	input.Placeholder = placeholder
-	input.SetVirtualCursor(false)
+	input.SetVirtualCursor(false) // Keeps the placeholders styling consistent
 	input.Blur()
 	input.CharLimit = 64
 	input.SetWidth(width)
@@ -49,16 +49,15 @@ func InitialInput(tagCnt int, placeholder string, title string, width int, selec
 }
 
 func (m TagInputModel) Init() tea.Cmd {
-	return textinput.Blink
+	return nil //textinput.Blink
 }
 
 func (m TagInputModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
-	m.errorMsg = ""
 
 	switch msg := msg.(type) {
 	case tea.KeyPressMsg:
-		m.errorMsg = msg.String()
+		m.errorMsg += msg.String()
 		switch msg.String() {
 		case "esc": // Unfocus the component
 			if m.textInput.Focused() {
@@ -78,7 +77,7 @@ func (m TagInputModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "j", "down": // Nav between tags
 			if m.tagsCursor < len(m.tags)-1 && !m.textInput.Focused() && m.selected {
 				m.tagsCursor++
-			} else {
+			} else { // TODO: If I could come up with a way to avoid this duplication that would be great
 				m.textInput, cmd = m.textInput.Update(msg) // Default to typing in the text input
 			}
 			cmd = func() tea.Msg { return NavMsg(!m.selected) }
@@ -100,15 +99,18 @@ func (m TagInputModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.textInput, cmd = m.textInput.Update(msg) // Default to typing in the text input
 		}
 	}
-
 	return m, cmd
 }
 
 func (m TagInputModel) View() tea.View {
 	var s string
+	var c = m.textInput.Cursor()
 	s = lipgloss.PlaceHorizontal(16, lipgloss.Center, m.title)
 	if m.selected {
 		s = m.tagStyle.Render(s) // Get an independent "selected" style for showing color
+	}
+	if m.textInput.Focused() {
+		c.Y += lipgloss.Height(s)
 	}
 
 	s = lipgloss.JoinVertical(lipgloss.Left, s, m.textInput.View())
@@ -125,6 +127,7 @@ func (m TagInputModel) View() tea.View {
 		s = lipgloss.JoinVertical(lipgloss.Left, s, tagStr)
 	}
 	//s = lipgloss.JoinVertical(lipgloss.Left, s, m.errorMsg)
-
-	return tea.NewView(s)
+	v := tea.NewView(s)
+	v.Cursor = c
+	return v
 }

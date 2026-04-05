@@ -80,7 +80,7 @@ func (m FilterModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
-		m.style = m.style.Height(msg.Height - (9))
+		m.style = m.style.Height(msg.Height - (7))
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "enter":
@@ -123,11 +123,17 @@ func (m FilterModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 // TODO: Add styling to make it clear that a textbox is selected.
 // TODO: Iterate over m.forms instead of having a bunch of different conditional blocks
 func (m FilterModel) View() tea.View {
+	var c *tea.Cursor
 	//header:
 	s := m.headerStyle.Render(m.headerText)
 
 	for _, form := range m.forms {
-		s = lipgloss.JoinVertical(lipgloss.Left, s, m.textinputStyle.Render(form.View().Content))
+		formView := form.View()
+		s = lipgloss.JoinVertical(lipgloss.Left, s, m.textinputStyle.Render(formView.Content))
+		if formView.Cursor != nil {
+			c = formView.Cursor
+			c.Y += lipgloss.Height(s)
+		}
 	}
 
 	/*if m.focused {
@@ -139,5 +145,6 @@ func (m FilterModel) View() tea.View {
 
 	//s = lipgloss.JoinVertical(lipgloss.Left, s, m.errorMsg)
 	v := tea.NewView(m.style.Render(s))
+	v.Cursor = c
 	return v
 }

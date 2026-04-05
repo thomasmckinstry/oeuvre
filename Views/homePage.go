@@ -42,13 +42,13 @@ func InitialHome(width int, height int) HomeModel {
 
 	list := partials.InitialList(width, height, columns, rows)
 	add := partials.InitialAdd() // height = 1 Note: I think each side of the border adds ~1.5
-	filter := partials.InitialFilter(height - (10))
+	filter := partials.InitialFilter(height - (7))
 	sort := partials.InitialSort(3)
 
-	sidebarList := make([]tea.Model, 3)
-	sidebarList[0] = add
-	sidebarList[1] = filter
-	sidebarList[2] = sort
+	sidebarList := []tea.Model{}              //make([]tea.Model, 3)
+	sidebarList = append(sidebarList, add)    //[0] = add
+	sidebarList = append(sidebarList, filter) //[1] = filter
+	sidebarList = append(sidebarList, sort)   //[2] = sort
 
 	return HomeModel{
 		sidebarViews:  sidebarList,
@@ -133,13 +133,25 @@ func (m HomeModel) Update(msg tea.Msg) (HomeModel, tea.Cmd) {
 }
 
 func (m HomeModel) View() tea.View {
+	var c *tea.Cursor
 	s := ""
-	sidebar := lipgloss.JoinVertical(lipgloss.Center, m.sidebarViews[0].View().Content, m.sidebarViews[1].View().Content, m.sidebarViews[2].View().Content)
+	//sidebar := lipgloss.JoinVertical(lipgloss.Center, m.sidebarViews[0].View().Content, m.sidebarViews[1].View().Content, m.sidebarViews[2].View().Content)
+	var sidebar string
+	for _, form := range m.sidebarViews {
+		formView := form.View()
+		sidebar = lipgloss.JoinVertical(lipgloss.Center, sidebar, formView.Content)
+
+		if formView.Cursor != nil {
+			c = formView.Cursor
+			// Should not need to adjust height of the cursor here
+		}
+	}
 	list := m.listModel.View()
 	s = lipgloss.JoinHorizontal(lipgloss.Top, sidebar, list.Content)
 
 	// Send the UI for rendering
 	view := tea.NewView(s)
+	view.Cursor = c
 	view.AltScreen = true
 	return view
 }
