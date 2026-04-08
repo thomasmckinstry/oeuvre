@@ -25,30 +25,31 @@ var (
 type model struct {
 	cursor    int
 	currViews []string
-	homeModel views.HomeModel
+	homeModel *views.HomeModel
 }
 
 func initialModel() model {
+	homeAddr := views.InitialHome(width, height)
 	return model{
 		currViews: make([]string, 2),
-		homeModel: views.InitialHome(width, height),
+		homeModel: homeAddr,
 		cursor:    0,
 	}
 }
 
-func (m model) Init() tea.Cmd {
+func (m *model) Init() tea.Cmd {
 	m.currViews[0] = "home"
 	m.currViews[1] = "add"
 	return nil
 }
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
 
 	case tea.WindowSizeMsg:
-		m.homeModel, cmd = m.homeModel.Update(msg)
+		_, cmd = m.homeModel.Update(msg)
 	case tea.KeyMsg:
 
 		switch msg.String() {
@@ -57,16 +58,16 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 
 		case "K", "L", "H", "J":
-			m.homeModel, cmd = m.homeModel.Update(msg)
+			_, cmd = m.homeModel.Update(msg)
 			cmds = append(cmds, cmd)
 		case "j", "k", "up", "down", "left", "right", "h", "l":
 			if m.currViews[m.cursor] == "home" {
-				m.homeModel, cmd = m.homeModel.Update(msg)
+				_, cmd = m.homeModel.Update(msg)
 			}
 			cmds = append(cmds, cmd)
 		default:
 			if m.currViews[m.cursor] == "home" {
-				m.homeModel, cmd = m.homeModel.Update(msg)
+				_, cmd = m.homeModel.Update(msg)
 			}
 
 		}
@@ -77,7 +78,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m model) View() tea.View {
+func (m *model) View() tea.View {
 	view := m.homeModel.View()
 
 	// Send the UI for rendering
@@ -101,7 +102,7 @@ func main() {
 	defer f.Close()
 
 	mainModel := initialModel()
-	program := tea.NewProgram(mainModel)
+	program := tea.NewProgram(&mainModel)
 	if _, err := program.Run(); err != nil {
 		fmt.Printf("Alas, there's been an error: %v", err)
 		os.Exit(1)

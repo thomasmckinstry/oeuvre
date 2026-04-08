@@ -11,10 +11,7 @@ import (
 // TODO: Need a different way to index into the components because of different Model types.
 type FilterModel struct {
 	headerText     string
-	titleInput     tea.Model
-	genreInput     tea.Model
-	themeInput     tea.Model // TODO: These need additional displays for previous entries
-	selected       bool      // Indicates if the cursor is interacting with Filter
+	selected       bool // Indicates if the cursor is interacting with Filter
 	focused        bool
 	cursor         int
 	forms          []tea.Model // Can I get this to use pointers to the actual models? I think right now I'm copying them
@@ -42,14 +39,12 @@ func InitialFilter(height int) FilterModel {
 	themeInput := components.InitialInput(3, "", "Theme", 14, false)
 
 	//status := []string{"Completed", "In Progress", "Started", "Pending", "Dropped"}
-	forms := []tea.Model{titleInput, genreInput, themeInput} // TODO: Figure out how to have null pointers to each form
+	forms := []tea.Model{&titleInput, &genreInput, &themeInput} // TODO: Figure out how to have null pointers to each form
 	// forms is an array of all the forms that make up the filter box.
 	// This is so I can index into each one as I navigate with the keyboard
 
 	return FilterModel{
 		headerText: "Filter",
-		titleInput: titleInput,
-		genreInput: genreInput,
 		selected:   false,
 		focused:    false,
 		cursor:     0,
@@ -70,11 +65,11 @@ func InitialFilter(height int) FilterModel {
 	}
 }
 
-func (m FilterModel) Init() tea.Cmd {
+func (m *FilterModel) Init() tea.Cmd {
 	return nil
 }
 
-func (m FilterModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m *FilterModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	m.errorMsg = ""
 
@@ -84,27 +79,27 @@ func (m FilterModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "enter":
-			m.forms[m.cursor], cmd = m.forms[m.cursor].Update(msg)
+			_, cmd = m.forms[m.cursor].Update(msg)
 			m.focused = true
 		case "esc":
-			m.forms[m.cursor], cmd = m.forms[m.cursor].Update(msg)
+			_, cmd = m.forms[m.cursor].Update(msg)
 			m.focused = false
 		case "L", "H", "J", "K":
 			m.style = m.toggleBorder()
 			m.selected = !m.selected
 		case "j", "down": // TODO: Make these check for focused inputs before moving the cursor
-			m.forms[m.cursor], cmd = m.forms[m.cursor].Update(msg)
+			_, cmd = m.forms[m.cursor].Update(msg)
 			msg, ok := cmd().(components.NavMsg)
 			if m.cursor < len(m.forms)-1 && ok && bool(msg) { //!m.focused {
 				m.cursor++
-				m.forms[m.cursor], cmd = m.forms[m.cursor].Update(msg)
+				_, cmd = m.forms[m.cursor].Update(msg)
 			}
 		case "k", "up":
-			m.forms[m.cursor], cmd = m.forms[m.cursor].Update(msg)
+			_, cmd = m.forms[m.cursor].Update(msg)
 			msg, ok := cmd().(components.NavMsg)
 			if m.cursor > 0 && ok && bool(msg) {
 				m.cursor--
-				m.forms[m.cursor], cmd = m.forms[m.cursor].Update(msg)
+				_, cmd = m.forms[m.cursor].Update(msg)
 			}
 		default:
 			/*if field, ok := m.forms[m.cursor].(textinput.Model); ok {
@@ -113,7 +108,7 @@ func (m FilterModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 			}*/
 			//if m.focused {
-			m.forms[m.cursor], cmd = m.forms[m.cursor].Update(msg)
+			_, cmd = m.forms[m.cursor].Update(msg)
 			//}
 		}
 	}
@@ -122,7 +117,7 @@ func (m FilterModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 // TODO: Add styling to make it clear that a textbox is selected.
 // TODO: Iterate over m.forms instead of having a bunch of different conditional blocks
-func (m FilterModel) View() tea.View {
+func (m *FilterModel) View() tea.View {
 	var c *tea.Cursor
 	//header:
 	s := m.headerStyle.Render(m.headerText)

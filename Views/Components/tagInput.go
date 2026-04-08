@@ -48,11 +48,11 @@ func InitialInput(tagCnt int, placeholder string, title string, width int, selec
 	}
 }
 
-func (m TagInputModel) Init() tea.Cmd {
+func (m *TagInputModel) Init() tea.Cmd {
 	return nil //textinput.Blink
 }
 
-func (m TagInputModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m *TagInputModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 
 	switch msg := msg.(type) {
@@ -102,7 +102,7 @@ func (m TagInputModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-func (m TagInputModel) View() tea.View {
+func (m *TagInputModel) View() tea.View {
 	var s string
 	var c = m.textInput.Cursor()
 	s = lipgloss.PlaceHorizontal(16, lipgloss.Center, m.title)
@@ -130,4 +130,8 @@ func (m TagInputModel) View() tea.View {
 	v := tea.NewView(s)
 	v.Cursor = c
 	return v
+}
+
+func (m TagInputModel) getInfo() (string, []string) {
+	return m.title, m.tags
 }

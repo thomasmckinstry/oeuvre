@@ -46,11 +46,11 @@ func InitialSort(height int) SortModel {
 	}
 }
 
-func (m SortModel) Init() tea.Cmd {
+func (m *SortModel) Init() tea.Cmd {
 	return nil
 }
 
-func (m SortModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m *SortModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
@@ -71,7 +71,7 @@ func (m SortModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m SortModel) View() tea.View {
+func (m *SortModel) View() tea.View {
 	header := lipgloss.PlaceHorizontal(18, lipgloss.Center, "Sort")
 	contents := lipgloss.PlaceHorizontal(18, lipgloss.Center,
 		lipgloss.PlaceVertical(3, lipgloss.Center,

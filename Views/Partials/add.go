@@ -11,7 +11,7 @@ type AddModel struct {
 	style    lipgloss.Style
 }
 
-func (m AddModel) toggleBorder() lipgloss.Style {
+func (m *AddModel) toggleBorder() lipgloss.Style {
 	if m.selected == true {
 		return m.style.BorderForeground(lipgloss.Color("#6E3F00"))
 	}
@@ -33,11 +33,11 @@ func InitialAdd() AddModel {
 	}
 }
 
-func (m AddModel) Init() tea.Cmd {
+func (m *AddModel) Init() tea.Cmd {
 	return nil
 }
 
-func (m AddModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m *AddModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
@@ -49,6 +49,6 @@ func (m AddModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m AddModel) View() tea.View {
+func (m *AddModel) View() tea.View {
 	return tea.NewView(m.style.Render(m.text))
 }
