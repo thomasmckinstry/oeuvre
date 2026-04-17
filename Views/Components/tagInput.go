@@ -91,7 +91,7 @@ func (m *TagInputModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "delete": // Delete current tag
 			if len(m.tags) > 0 {
 				m.tags = append(m.tags[:m.tagsCursor], m.tags[m.tagsCursor+1:]...)
-				if m.tagsCursor > len(m.tags) {
+				if m.tagsCursor >= len(m.tags) {
 					m.tagsCursor--
 				}
 			}
