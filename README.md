@@ -11,6 +11,8 @@ Lipgloss is a package built for use with bubbletea that allows for styling of th
 
 ### SQLite:
 SQLite will provide an isolated local database to store the data.
+- [https://github.com/mattn/go-sqlite3#go-sqlite3]
+- [https://reliasoftware.com/blog/golang-sqlite]
 
 # Directory Structure:
 

@@ -5,13 +5,12 @@ Copyright © 2025 Thomas McKinstry thomas.g.mckinstry@protonmail.com
 package db
 
 import (
-	"context"
+	"database/sql"
 	"encoding/json"
-	"fmt"
-	"github.com/jackc/pgx/v5"
 	"log"
 	"os"
-	"strings"
+
+	_ "github.com/mattn/go-sqlite3"
 )
 
 var configs struct {
@@ -22,6 +21,8 @@ var configs struct {
 	Name string `json:"name"`
 }
 
+var db *sql.DB
+
 func init() {
 	content, _ := os.ReadFile("config.json") // TODO: Add in the util for checking if a sql query has worked
 	//c.Check(err, "ERROR: Failed to read config file.")
@@ -30,22 +31,20 @@ func init() {
 	//c.Check(err, "ERROR: Failed to unmarshal config.")
 }
 
-func Init_connection() *pgx.Conn {
-	var conn *pgx.Conn
-	var ctx = context.Background()
+func GetDB() *sql.DB {
 	var err error
 
-	builder := strings.Builder{}
-	builder.WriteString(fmt.Sprintf("postgres://%s:%s@%s:%d/%s", configs.User, configs.Pass, configs.Host, configs.Port, configs.Name))
-	conn, err = pgx.Connect(ctx, builder.String())
-	if err != nil {
-		log.Fatal("Unable to connect to database:", err)
+	if db != nil {
+		return db
+	}
 
-		// TODO: Failure to connect to the database should lead to initializing the database now.
-		// See init.go
+	db, err := sql.Open("sqlite3", "./media.db")
+	if err != nil {
+		log.Fatal("Unable to open database:", err)
 
 		os.Exit(1)
 	}
+	init_db(db)
 
-	return conn
+	return db
 }

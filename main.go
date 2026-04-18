@@ -12,6 +12,7 @@ import (
 	"charm.land/bubbles/v2/table"
 	tea "charm.land/bubbletea/v2"
 	"github.com/thomasmckinstry/Bubbletea-Tutorial/Views"
+	"github.com/thomasmckinstry/Bubbletea-Tutorial/db"
 	"golang.org/x/term"
 )
 
@@ -86,12 +87,7 @@ func (m *model) View() tea.View {
 func main() {
 	var err error
 	width, height, err = term.GetSize(1)
-
-	if err != nil {
-		log.Fatal(err)
-		return
-	}
-
+  
 	if len(os.Getenv("DEBUG")) > 0 {
 		f, err := tea.LogToFile("debug.log", "debug")
 		if err != nil {
@@ -99,6 +95,13 @@ func main() {
 			os.Exit(1)
 		}
 		defer f.Close()
+	}
+
+	_ = db.GetDB()
+	log.Println("Successfully initialized connection to database")
+	if err != nil {
+		log.Fatal(err)
+		return
 	}
 
 	mainModel := initialModel()
