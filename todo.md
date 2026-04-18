@@ -12,11 +12,16 @@
     - [x] Cursor move from any sidebar partial and the list, and correctly select the same sidebar view when moving back.
 - [ ] Add relevant columns to table.
 - [ ] Make table size columns automatically, truncate past a certain amount of characters.
+- [ ] Make main.go use an array of tea.Models to send messages
+    - Most key messages can probably just generically go to whichever view is active.
+- [ ] Figure out blink on the filter text inputs
 
 ## Backend:
-- [ ] Create SQL Database.
+- [ ] Create SQL Database
     - [ ] Write code for generating SQLite database.
     - [ ] Write code for "connecting" to SQLite database.
+- [ ] Swap in JSON object code for arrays.
+    - https://www.sqlite.org/json1.html 
 
 ## External:
 - [ ] Keep processing my existing watchlist.
