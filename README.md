@@ -14,3 +14,12 @@ SQLite will provide an isolated local database to store the data.
 
 # Directory Structure:
 
+# Debugging:
+```
+DEBUG=1 go run main.go
+```
+```
+if len(os.Getenv("DEBUG")) > 0 {
+    log.Println("{ DEBUG MESSAGE }")
+}
+```

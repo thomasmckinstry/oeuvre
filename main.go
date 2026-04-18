@@ -51,9 +51,7 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		_, cmd = m.homeModel.Update(msg)
 	case tea.KeyMsg:
-
 		switch msg.String() {
-
 		case "ctrl+c":
 			return m, tea.Quit
 
@@ -94,15 +92,18 @@ func main() {
 		return
 	}
 
-	f, err := tea.LogToFile("debug.log", "debug")
-	if err != nil {
-		fmt.Println("fatal:", err)
-		os.Exit(1)
+	if len(os.Getenv("DEBUG")) > 0 {
+		f, err := tea.LogToFile("debug.log", "debug")
+		if err != nil {
+			fmt.Println("fatal:", err)
+			os.Exit(1)
+		}
+		defer f.Close()
 	}
-	defer f.Close()
 
 	mainModel := initialModel()
 	program := tea.NewProgram(&mainModel)
+	log.Println("Successfully Initialized Program")
 	if _, err := program.Run(); err != nil {
 		fmt.Printf("Alas, there's been an error: %v", err)
 		os.Exit(1)
