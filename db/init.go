@@ -117,17 +117,9 @@ func init_db(db *sql.DB) {
 	row.Close()
 
 	_, err = db.Exec(`
-	CREATE TABLE IF NOT EXISTS genre_table (
-	genre_name varchar(25) NOT NULL PRIMARY KEY
-);
-	`)
-	if err != nil {
-		log.Fatal("Unable to create table in database: ", err)
-	}
+	CREATE TABLE IF NOT EXISTS tags_table (
+	tag_name varchar(25) NOT NULL PRIMARY KEY
 
-	_, err = db.Exec(`
-	CREATE TABLE IF NOT EXISTS theme_table (
-	theme_name varchar(25) NOT NULL UNIQUE PRIMARY KEY
 );
 	`)
 	if err != nil {
