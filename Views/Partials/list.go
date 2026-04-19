@@ -4,7 +4,12 @@ import (
 	"charm.land/bubbles/v2/table"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
+	"database/sql"
+	database "github.com/thomasmckinstry/Bubbletea-Tutorial/db"
+	"log"
 )
+
+var db *sql.DB
 
 type ListModel struct {
 	style lipgloss.Style
@@ -19,7 +24,33 @@ func (m ListModel) deselectView() lipgloss.Style {
 	return m.style.BorderForeground(lipgloss.Color("#6E3F00"))
 }
 
-func InitialList(width int, height int, rows []table.Row) ListModel {
+func InitialList(width int, height int) ListModel {
+	db = database.GetDB()
+	row, err := db.Query(`SELECT title, media_type, work_status, tags, year_released FROM works;`)
+	if err != nil {
+		log.Fatal("Failed to query works table for list: ", err)
+	}
+
+	var rows []table.Row
+	for row.Next() {
+		var (
+			title  string
+			medium string
+			status string
+			tags   string
+			year   string
+		)
+		err = row.Scan(&title, &medium, &status, &tags, &year)
+		if err != nil {
+			log.Fatal("Failed to scan works row: ", err)
+		}
+		rows = append(rows, table.Row{title, medium, status, tags, year})
+	}
+
+	/*var rows = []table.Row{ // TODO: Remove this
+		{"I am Your Beast", "Game", "Completed", "Action", "2024"},
+		{"One Battle After Another", "Movie, Live Action", "Pending", "Action", "2025"},
+	}*/
 
 	var columns = []table.Column{
 		{Title: "Title", Width: width / 4},

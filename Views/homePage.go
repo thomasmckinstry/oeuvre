@@ -1,7 +1,6 @@
 package views
 
 import (
-	"charm.land/bubbles/v2/table"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 	partials "github.com/thomasmckinstry/Bubbletea-Tutorial/Views/Partials"
@@ -28,12 +27,7 @@ type HomeModel struct {
 }
 
 func InitialHome(width int, height int) *HomeModel {
-	var rows = []table.Row{ // TODO: Remove this
-		{"I am Your Beast", "Game", "Completed", "Action", "2024"},
-		{"One Battle After Another", "Movie, Live Action", "Pending", "Action", "2025"},
-	}
-
-	list := partials.InitialList(width-18, height, rows)
+	list := partials.InitialList(width-18, height)
 	add := partials.InitialAdd() // height = 1 Note: I think each side of the border adds 1
 	filter := partials.InitialFilter(height - (7))
 	sort := partials.InitialSort(3)

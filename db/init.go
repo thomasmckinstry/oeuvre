@@ -20,7 +20,7 @@ func init_db(db *sql.DB) {
 );
 	`)
 	if err != nil {
-		log.Fatal("Unable to create table in database:", err)
+		log.Fatal("Unable to create works table in database: ", err)
 	}
 
 	_, err = db.Exec(`
@@ -33,7 +33,7 @@ func init_db(db *sql.DB) {
 );
 	`)
 	if err != nil {
-		log.Fatal("Unable to create table in database:", err)
+		log.Fatal("Unable to create reviews table in database: ", err)
 	}
 
 	_, err = db.Exec(`
@@ -46,28 +46,75 @@ func init_db(db *sql.DB) {
 
 	`)
 	if err != nil {
-		log.Fatal("Unable to create table in database:", err)
+		log.Fatal("Unable to create notes table in database: ", err)
 	}
 
-	_, err = db.Exec(`
-	CREATE TABLE IF NOT EXISTS status_table (
-	id integer PRIMARY KEY,
-	status_name varchar(15) NOT NULL
-);
+	row, err := db.Query(`
+		SELECT 1 FROM sqlite_master WHERE type='table' AND name='status_table';
 	`)
 	if err != nil {
-		log.Fatal("Unable to create table in database:", err)
+		log.Fatal("Unable to determine if status_table exists: ", err)
 	}
+	if !row.Next() {
+		_, err = db.Exec(`
+			CREATE TABLE status_table (
+				id integer PRIMARY KEY,
+				status_name varchar(15) NOT NULL
+			);
+		`)
+		if err != nil {
+			log.Fatal("Unable to create status_table in database: ", err)
+		}
 
-	_, err = db.Exec(`
-	CREATE TABLE IF NOT EXISTS media_type_table (
-	id integer PRIMARY KEY,
-	type_name varchar(25) NOT NULL
-);
-	`)
-	if err != nil {
-		log.Fatal("Unable to create table in database:", err)
+		_, err = db.Exec(`
+			INSERT INTO status_table (id, status_name)
+			VALUES
+				(0, 'Pending'),
+				(1, 'Started'),
+				(2, 'Hiatus'),
+				(3, 'Completed'),
+				(4, 'Dropped');
+			`)
+		if err != nil {
+			log.Fatal("Unable to insert to status_table in database: ", err)
+		}
 	}
+	row.Close()
+
+	// TODO: The prefill on this table should probably removed, I should set up some config options or something so people can customize
+	// Could probably just keep an array in memory from a config file and index into it to convert
+	row, err = db.Query(`SELECT 1 from sqlite_master WHERE type='table' AND name='media_type_table'`)
+	if err != nil {
+		log.Fatal("Unable to determine if media_type_table exists: ", err)
+	}
+	if !row.Next() {
+		_, err = db.Exec(`
+			CREATE TABLE media_type_table (
+				id integer PRIMARY KEY,
+				type_name varchar(25) NOT NULL
+			);
+		`)
+		if err != nil {
+			log.Fatal("Unable to create media_type_table in database: ", err)
+		}
+
+		_, err = db.Exec(`
+			INSERT INTO media_type_table (id, type_name)
+			VALUES
+				(0, 'Anime'),
+				(1, 'Manga'),
+				(2, 'Movie'),
+				(3, 'Book'),
+				(4, 'Comic'),
+				(5, 'Show'),
+				(6, 'Animated'),
+				(7, 'Live Action');
+		`)
+		if err != nil {
+			log.Fatal("Unable to insert to media_type_table in database: ", err)
+		}
+	}
+	row.Close()
 
 	_, err = db.Exec(`
 	CREATE TABLE IF NOT EXISTS genre_table (
@@ -75,7 +122,7 @@ func init_db(db *sql.DB) {
 );
 	`)
 	if err != nil {
-		log.Fatal("Unable to create table in database:", err)
+		log.Fatal("Unable to create table in database: ", err)
 	}
 
 	_, err = db.Exec(`
@@ -84,6 +131,6 @@ func init_db(db *sql.DB) {
 );
 	`)
 	if err != nil {
-		log.Fatal("Unable to create table in database:", err)
+		log.Fatal("Unable to create table in database: ", err)
 	}
 }
