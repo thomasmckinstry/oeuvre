@@ -1,12 +1,18 @@
 package partials
 
 import (
-	"charm.land/bubbles/v2/textinput"
+	"log"
+	"os"
+
 	"charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 	"github.com/thomasmckinstry/Bubbletea-Tutorial/Views/Components"
-	"log"
+	database "github.com/thomasmckinstry/Bubbletea-Tutorial/db"
 )
+
+type Form interface {
+	GetContents() []string
+}
 
 // TODO: I can probably sub out most of this file for a huh? component
 // Don't want to do that because it's more hands off
@@ -37,14 +43,44 @@ func (m FilterModel) toggleBorder() lipgloss.Style {
 }
 
 func InitialFilter(height int) FilterModel {
-	titleInput := components.InitialInput(0, "", "Title", 14, false) // TODO: Sub this out for a regular text input without tags
-	tagsInput := components.InitialInput(5, "", "Tag", 14, false)
+	tagSuggestions := []string{}
+
+	db := database.GetDB()
+	rows, err := db.Query(`SELECT * FROM tags_table`)
+	if err != nil {
+		log.Fatal("Failed to query tags from database: ", err)
+	}
+	for rows.Next() {
+		var tag string
+		err = rows.Scan(&tag)
+		if err != nil {
+			log.Fatal("Failed to scan tags: ", err)
+		}
+		tagSuggestions = append(tagSuggestions, tag)
+	}
+
+	titleSuggestions := []string{}
+
+	rows, err = db.Query(`SELECT title FROM works`)
+	if err != nil {
+		log.Fatal("Failed to query tags from database: ", err)
+	}
+	for rows.Next() {
+		var tag string
+		err = rows.Scan(&tag)
+		if err != nil {
+			log.Fatal("Failed to scan titles: ", err)
+		}
+		titleSuggestions = append(titleSuggestions, tag)
+	}
+
+	titleInput := components.InitialTextInput(14, "Title", "{ title }", titleSuggestions)
+	tagsInput := components.InitialInput(5, "{ tag }", "Tag", 14, false, tagSuggestions)
 	mediums := []string{"Movie", "Book", "Show", "Anime", "Manga", "Comic", "Show", "Animated", "Live Action"} // TODO: Query the db for this.
 	mediumInput := components.InitialCheckbox(mediums, "Medium", 14)
 	statuses := []string{"Pending", "Started", "Hiatus", "Completed", "Dropped"} // TODO: Query the db for this.
 	statusInput := components.InitialCheckbox(statuses, "Status", 14)
 
-	//status := []string{"Completed", "In Progress", "Started", "Pending", "Dropped"}
 	forms := []tea.Model{&titleInput, &tagsInput, &mediumInput, &statusInput}
 
 	return FilterModel{
@@ -91,7 +127,20 @@ func (m *FilterModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.String() {
 		case "enter":
 			if m.cursor == len(m.forms) {
-				log.Println("We do the damn search")
+				var contents [][]string
+				for _, form := range m.forms {
+					switch form := form.(type) {
+					case *components.TextInputModel:
+						contents = append(contents, form.GetContents())
+					case *components.TagInputModel:
+						contents = append(contents, form.GetContents())
+					case *components.CheckboxModel:
+						contents = append(contents, form.GetContents())
+					}
+				}
+				if len(os.Getenv("DEBUG")) > 0 {
+					log.Println(contents)
+				}
 				break
 			}
 			_, cmd = m.forms[m.cursor].Update(msg)

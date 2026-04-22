@@ -20,6 +20,17 @@ type CheckboxModel struct {
 	entryStyle lipgloss.Style
 }
 
+func (m *CheckboxModel) GetContents() []string {
+	var contents []string
+	for i, entry := range m.entryVals {
+		if entry {
+			contents = append(contents, m.entries[i])
+		}
+
+	}
+	return contents
+}
+
 func InitialCheckbox(entries []string, title string, width int) CheckboxModel {
 	return CheckboxModel{
 		cursor:    1,

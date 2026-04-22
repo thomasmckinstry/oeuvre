@@ -16,6 +16,7 @@ type TagInputModel struct {
 
 	titleStyle lipgloss.Style
 	tagStyle   lipgloss.Style
+	inputStyle lipgloss.Style
 
 	width int
 
@@ -24,15 +25,29 @@ type TagInputModel struct {
 
 type NavMsg bool
 
-func InitialInput(tagCnt int, placeholder string, title string, width int, selected bool) TagInputModel {
+// TODO: This should be a utils
+func (m TagInputModel) toggleBorder() lipgloss.Style {
+	if m.selected == true {
+		return m.inputStyle.BorderForeground(lipgloss.Color("#6E3F00"))
+	}
+	return m.inputStyle.BorderForeground(lipgloss.Color("#D17600"))
+}
+
+func (m *TagInputModel) GetContents() []string {
+	return m.tags
+}
+
+func InitialInput(tagCnt int, placeholder string, title string, width int, selected bool, suggestions []string) TagInputModel {
 	tags := []string{}
 
 	input := textinput.New()
 	input.Placeholder = placeholder
+	input.SetSuggestions(suggestions)
+	input.ShowSuggestions = true
 	input.SetVirtualCursor(false) // Keeps the placeholders styling consistent
 	input.Blur()
 	input.CharLimit = 64
-	input.SetWidth(width)
+	input.SetWidth(width - 1)
 
 	return TagInputModel{
 		tags:       tags,
@@ -46,6 +61,10 @@ func InitialInput(tagCnt int, placeholder string, title string, width int, selec
 			Foreground(lipgloss.Color("#D17600")),
 		tagStyle: lipgloss.NewStyle().
 			Foreground(lipgloss.Color("#D17600")),
+		inputStyle: lipgloss.NewStyle().
+			BorderStyle(lipgloss.NormalBorder()).
+			BorderForeground(lipgloss.Color("#6E3F00")).
+			BorderBottom(true),
 	}
 }
 
@@ -63,11 +82,13 @@ func (m *TagInputModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "esc": // Unfocus the component
 			if m.textInput.Focused() {
 				m.textInput.Blur()
-			} else {
+			} else if m.selected {
+				m.inputStyle = m.toggleBorder()
 				m.selected = false
 			}
 		case "enter": // Add a tag from the current text input and empty the text input OR focus the component
 			if !m.selected {
+				m.inputStyle = m.toggleBorder()
 				m.selected = true
 			} else if m.selected && !m.textInput.Focused() {
 				m.textInput.Focus()
@@ -90,7 +111,7 @@ func (m *TagInputModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			cmd = func() tea.Msg { return NavMsg(!m.selected) }
 		case "delete": // Delete current tag
-			if len(m.tags) > 0 {
+			if len(m.tags) > 0 && !m.textInput.Focused() {
 				m.tags = append(m.tags[:m.tagsCursor], m.tags[m.tagsCursor+1:]...)
 				if m.tagsCursor >= len(m.tags) {
 					m.tagsCursor--
@@ -112,7 +133,7 @@ func (m *TagInputModel) View() tea.View {
 		c.X += 1 // Aligns it correctly with the text
 	}
 
-	s = lipgloss.JoinVertical(lipgloss.Left, s, m.textInput.View())
+	s = lipgloss.JoinVertical(lipgloss.Left, s, m.inputStyle.Render(m.textInput.View()))
 
 	for index, tag := range m.tags {
 		tagStr := ""
