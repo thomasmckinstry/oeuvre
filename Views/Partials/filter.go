@@ -23,9 +23,8 @@ type FilterModel struct {
 	focused        bool
 	cursor         int
 	height         int
-	forms          []tea.Model // Can I get this to use pointers to the actual models? I think right now I'm copying them
+	forms          []tea.Model
 	status         []string
-	tags           []string
 	style          lipgloss.Style
 	headerStyle    lipgloss.Style
 	textinputStyle lipgloss.Style
@@ -75,7 +74,7 @@ func InitialFilter(height int) FilterModel {
 	}
 
 	titleInput := components.InitialTextInput(14, "Title", "{ title }", titleSuggestions)
-	tagsInput := components.InitialInput(5, "{ tag }", "Tag", 14, false, tagSuggestions)
+	tagsInput := components.InitialInput(5, "{ tag }", "Tag", 14-1, false, tagSuggestions)
 	mediums := []string{"Movie", "Book", "Show", "Anime", "Manga", "Comic", "Show", "Animated", "Live Action"} // TODO: Query the db for this.
 	mediumInput := components.InitialCheckbox(mediums, "Medium", 14)
 	statuses := []string{"Pending", "Started", "Hiatus", "Completed", "Dropped"} // TODO: Query the db for this.

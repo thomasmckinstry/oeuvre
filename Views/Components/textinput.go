@@ -9,6 +9,7 @@ import (
 type TextInputModel struct {
 	textinput textinput.Model
 	title     string
+	width     int
 }
 
 func (m *TextInputModel) GetContents() []string {
@@ -17,7 +18,7 @@ func (m *TextInputModel) GetContents() []string {
 
 func InitialTextInput(width int, title string, placeholder string, suggestions []string) TextInputModel {
 	input := textinput.New()
-	input.Placeholder = placeholder
+	input.Placeholder = lipgloss.PlaceHorizontal(width, lipgloss.Center, placeholder)
 	input.SetSuggestions(suggestions)
 	input.ShowSuggestions = true
 	input.SetVirtualCursor(false) // Keeps the placeholders styling consistent
@@ -28,6 +29,7 @@ func InitialTextInput(width int, title string, placeholder string, suggestions [
 	return TextInputModel{
 		textinput: input,
 		title:     title,
+		width:     width,
 	}
 }
 
@@ -61,7 +63,7 @@ func (m *TextInputModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m *TextInputModel) View() tea.View {
 	var s string
 	var c = m.textinput.Cursor()
-	s = lipgloss.PlaceHorizontal(16, lipgloss.Center, m.title)
+	s = lipgloss.PlaceHorizontal(m.width, lipgloss.Center, m.title)
 	if m.textinput.Focused() {
 		c.Y += lipgloss.Height(s)
 		c.X += 1 // Aligns it correctly with the text

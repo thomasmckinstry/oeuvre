@@ -122,7 +122,6 @@ func (m *HomeModel) Update(msg tea.Msg) (*HomeModel, tea.Cmd) {
 func (m *HomeModel) View() tea.View {
 	var c *tea.Cursor
 	s := ""
-	//sidebar := lipgloss.JoinVertical(lipgloss.Center, m.sidebarViews[0].View().Content, m.sidebarViews[1].View().Content, m.sidebarViews[2].View().Content)
 	sidebarContent := []string{}
 	for _, form := range m.sidebarViews {
 		formView := form.View()

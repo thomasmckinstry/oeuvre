@@ -33,7 +33,7 @@ func (m *CheckboxModel) GetContents() []string {
 
 func InitialCheckbox(entries []string, title string, width int) CheckboxModel {
 	return CheckboxModel{
-		cursor:    1,
+		cursor:    0,
 		entries:   entries,
 		width:     width,
 		title:     title,
@@ -82,18 +82,21 @@ func (m *CheckboxModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m *CheckboxModel) View() tea.View {
 	var s string
 	s = lipgloss.PlaceHorizontal(m.width, lipgloss.Center, m.title)
+	if len(os.Getenv("DEBUG")) > 0 {
+		log.Println("Checkbox form Width and Height: ", lipgloss.Width(s), lipgloss.Height(s))
+	}
 	for i, medium := range m.entries {
 		var entry string
 		check := " "
 		if m.entryVals[i] {
 			check = "x"
 		}
-		entry = lipgloss.PlaceHorizontal(m.width-4, lipgloss.Center, medium)
+		entry = lipgloss.PlaceHorizontal(m.width-2, lipgloss.Center, medium)
 		entry = lipgloss.JoinHorizontal(lipgloss.Center, fmt.Sprintf(" [%s] ", check), entry)
 		if i == m.cursor && m.selected {
 			entry = m.entryStyle.Render(entry)
 		}
-		s = lipgloss.JoinVertical(lipgloss.Left, s, entry)
+		s = lipgloss.JoinVertical(lipgloss.Center, s, entry)
 	}
 	return tea.NewView(s)
 }

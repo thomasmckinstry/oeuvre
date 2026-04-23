@@ -41,13 +41,13 @@ func InitialInput(tagCnt int, placeholder string, title string, width int, selec
 	tags := []string{}
 
 	input := textinput.New()
-	input.Placeholder = placeholder
+	input.Placeholder = lipgloss.PlaceHorizontal(width, lipgloss.Center, placeholder)
 	input.SetSuggestions(suggestions)
 	input.ShowSuggestions = true
 	input.SetVirtualCursor(false) // Keeps the placeholders styling consistent
 	input.Blur()
 	input.CharLimit = 64
-	input.SetWidth(width - 1)
+	input.SetWidth(width)
 
 	return TagInputModel{
 		tags:       tags,
@@ -127,13 +127,13 @@ func (m *TagInputModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m *TagInputModel) View() tea.View {
 	var s string
 	var c = m.textInput.Cursor()
-	s = lipgloss.PlaceHorizontal(16, lipgloss.Center, m.title)
+	s = lipgloss.PlaceHorizontal(m.width, lipgloss.Center, m.title)
 	if m.textInput.Focused() {
 		c.Y += lipgloss.Height(s)
 		c.X += 1 // Aligns it correctly with the text
 	}
 
-	s = lipgloss.JoinVertical(lipgloss.Left, s, m.inputStyle.Render(m.textInput.View()))
+	s = lipgloss.JoinVertical(lipgloss.Center, s, m.inputStyle.Render(m.textInput.View()))
 
 	for index, tag := range m.tags {
 		tagStr := ""
@@ -146,7 +146,6 @@ func (m *TagInputModel) View() tea.View {
 		}
 		s = lipgloss.JoinVertical(lipgloss.Left, s, tagStr)
 	}
-	//s = lipgloss.JoinVertical(lipgloss.Left, s, m.errorMsg)
 	v := tea.NewView(s)
 	v.Cursor = c
 	return v
