@@ -51,6 +51,7 @@ func InitialAddModel(width int) *AddModel {
 		}
 		tagSuggestions = append(tagSuggestions, tag)
 	}
+	rows.Close()
 	tagSuggestions = []string{"test"}
 
 	tags := components.InitialInput(20, "{ tags }", "Tags", width, false, tagSuggestions)
@@ -101,7 +102,7 @@ func (m *AddModel) Update(msg tea.Msg) (*AddModel, tea.Cmd) {
 		switch msg.String() {
 		case "enter":
 			if m.cursor == len(m.forms) {
-				var contents [][]byte
+				var contents []string
 				var content []byte
 				var err error
 				for _, form := range m.forms {
@@ -116,12 +117,13 @@ func (m *AddModel) Update(msg tea.Msg) (*AddModel, tea.Cmd) {
 					if err != nil {
 						log.Fatal("Failed to marshal input data to JSON: ", err)
 					}
-					contents = append(contents, content)
+					contents = append(contents, string(content))
 				}
 				if len(os.Getenv("DEBUG")) > 0 {
 					log.Println(contents)
 				}
-				db := database.GetDB()
+				db := database.GetDB() //  TODO: Move this shit (whole block) into a function
+				id := database.GetWorkID(db)
 				query, err := db.Prepare(`
 					INSERT INTO works (date_added, title, media_type, work_status, tags, year_released, work_id)
 					VALUES (?, ?, ?, ?, ?, ?, ?)
@@ -129,11 +131,11 @@ func (m *AddModel) Update(msg tea.Msg) (*AddModel, tea.Cmd) {
 				if err != nil {
 					log.Fatal("Failed to prepare insert statement: ", err)
 				}
-				defer query.Close()
-				_, err = query.Exec(contents)
+				_, err = query.Exec("test_date", contents[0], contents[2], contents[1][0], contents[3], 0, id)
 				if err != nil {
 					log.Fatal("Failed to insert to works table: ", err)
 				}
+				query.Close()
 				cmd = func() tea.Msg { return ViewMsg(0) }
 				cmds = tea.Batch(cmds, cmd)
 				break

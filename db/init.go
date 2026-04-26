@@ -16,7 +16,7 @@ func init_db(db *sql.DB) {
 	work_status integer NOT NULL DEFAULT 0,
 	tags text, -- Marshalled array
 	year_released integer NOT NULL,
-	work_id integer PRIMARY KEY
+	work_id integer PRIMARY KEY -- Need work_id to specify between adaptations with the same title (ex. Running Man movie v. Running Man book)
 );
 	`)
 	if err != nil {
@@ -125,4 +125,5 @@ func init_db(db *sql.DB) {
 	if err != nil {
 		log.Fatal("Unable to create table in database: ", err)
 	}
+
 }

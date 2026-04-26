@@ -64,7 +64,7 @@ func InitialList(width int, height int) ListModel {
 		table.WithColumns(columns),
 		table.WithRows(rows),
 		table.WithFocused(true),
-		table.WithHeight(7),
+		table.WithHeight(height),
 		table.WithWidth(width),
 	)
 

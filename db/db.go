@@ -31,6 +31,28 @@ func init() {
 	//c.Check(err, "ERROR: Failed to unmarshal config.")
 }
 
+func GetWorkID(db *sql.DB) int {
+	var id int
+	rows, err := db.Query(`SELECT work_id FROM works ORDER BY work_id DESC LIMIT 1;`)
+	if err != nil {
+		log.Fatal("Unable to query database for id: ", err)
+	}
+	defer rows.Close()
+	rows.Next()
+	if rows == nil {
+		return 0
+	}
+	err = rows.Scan(&id)
+	if err != nil {
+		log.Fatal("Unable to scan rows for id: ", err)
+	}
+
+	if len(os.Getenv("DEBUG")) > 0 {
+		log.Println("Got id: ", id+1)
+	}
+	return id + 1
+}
+
 func GetDB() *sql.DB {
 	var err error
 

@@ -58,6 +58,7 @@ func InitialFilter(height int) FilterModel {
 		}
 		tagSuggestions = append(tagSuggestions, tag)
 	}
+	rows.Close()
 
 	titleSuggestions := []string{}
 
@@ -73,6 +74,7 @@ func InitialFilter(height int) FilterModel {
 		}
 		titleSuggestions = append(titleSuggestions, tag)
 	}
+	rows.Close()
 
 	titleInput := components.InitialTextInput(14, "Title", "{ title }", titleSuggestions)
 	tagsInput := components.InitialInput(5, "{ tag }", "Tag", 14-1, false, tagSuggestions)
