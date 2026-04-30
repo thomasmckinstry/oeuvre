@@ -16,6 +16,10 @@ func (m *TextInputModel) GetContents() string {
 	return m.textinput.Value()
 }
 
+func (m *TextInputModel) Clear() {
+	m.textinput.Reset()
+}
+
 func InitialTextInput(width int, title string, placeholder string, suggestions []string) TextInputModel {
 	input := textinput.New()
 	input.Placeholder = lipgloss.PlaceHorizontal(width, lipgloss.Center, placeholder)

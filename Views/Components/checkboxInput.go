@@ -13,11 +13,15 @@ type CheckboxModel struct {
 	cursor    int
 	entries   []string
 	entryVals []bool
-	title     string
+	Title     string
 	selected  bool
 	width     int
 
 	entryStyle lipgloss.Style
+}
+
+func (m *CheckboxModel) Clear() {
+	m.entryVals = make([]bool, len(m.entries))
 }
 
 func (m *CheckboxModel) GetContents() []string {
@@ -36,7 +40,7 @@ func InitialCheckbox(entries []string, title string, width int) CheckboxModel {
 		cursor:    0,
 		entries:   entries,
 		width:     width,
-		title:     title,
+		Title:     title,
 		entryVals: make([]bool, len(entries)),
 		entryStyle: lipgloss.NewStyle().
 			Foreground(lipgloss.Color("#D17600")),
@@ -81,7 +85,7 @@ func (m *CheckboxModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m *CheckboxModel) View() tea.View {
 	var s string
-	s = lipgloss.PlaceHorizontal(m.width, lipgloss.Center, m.title)
+	s = lipgloss.PlaceHorizontal(m.width, lipgloss.Center, m.Title)
 	if len(os.Getenv("DEBUG")) > 0 {
 		//log.Println("Checkbox form Width and Height: ", lipgloss.Width(s), lipgloss.Height(s))
 	}

@@ -25,6 +25,11 @@ type TagInputModel struct {
 
 type NavMsg bool
 
+func (m *TagInputModel) Clear() {
+	m.textInput.Reset()
+	m.tags = []string{}
+}
+
 // TODO: This should be a utils
 func (m TagInputModel) toggleBorder() lipgloss.Style {
 	if m.selected == true {

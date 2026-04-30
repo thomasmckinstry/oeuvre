@@ -6,8 +6,19 @@ import (
 	"encoding/json"
 	"github.com/thomasmckinstry/Bubbletea-Tutorial/Views/Components"
 	database "github.com/thomasmckinstry/Bubbletea-Tutorial/db"
+	"github.com/thomasmckinstry/Bubbletea-Tutorial/utils"
 	"log"
 	"os"
+	"strconv"
+	"time"
+)
+
+const (
+	titleForm int = iota
+	yearForm
+	mediumForm
+	tagsForm
+	statusForm
 )
 
 type AddModel struct {
@@ -27,8 +38,22 @@ type AddModel struct {
 	errorMsg string
 }
 
+func clearComponents(m *AddModel) {
+	for _, form := range m.forms {
+		switch form := form.(type) {
+		case *components.TextInputModel:
+			form.Clear()
+		case *components.CheckboxModel:
+			form.Clear()
+		case *components.TagInputModel:
+			form.Clear()
+		}
+	}
+}
+
 func InitialAddModel(width int) *AddModel {
 	title := components.InitialTextInput(width, "Title", "{ title }", nil)
+	year := components.InitialTextInput(width, "Year", "{ year }", nil)
 	mediums := []string{"Movie", "Book", "Show", "Anime", "Manga", "Comic", "Show", "Animated", "Live Action"} // TODO: Query the db for this.
 	medium := components.InitialCheckbox(mediums, "Medium", width)
 	statuses := []string{"Pending", "Started", "Hiatus", "Completed", "Dropped"} // TODO: Query the db for this.
@@ -55,7 +80,7 @@ func InitialAddModel(width int) *AddModel {
 	tagSuggestions = []string{"test"}
 
 	tags := components.InitialInput(20, "{ tags }", "Tags", width, false, tagSuggestions)
-	forms := []tea.Model{&title, &tags, &medium, &status}
+	forms := []tea.Model{&title, &year, &tags, &medium, &status}
 	return &AddModel{
 		headerText: "Add Work:",
 		forms:      forms,
@@ -110,15 +135,28 @@ func (m *AddModel) Update(msg tea.Msg) (*AddModel, tea.Cmd) {
 					case *components.TextInputModel:
 						content = []byte(form.GetContents())
 					case *components.TagInputModel:
-						content, err = json.Marshal(form.GetContents()) // TODO: Marshal this to JSON
+						content, err = json.Marshal(form.GetContents())
 					case *components.CheckboxModel:
-						content, err = json.Marshal(form.GetContents()) // TODO: Marshal this to JSONA
+						inputName := form.Title
+						var conversionFunc func(string) int
+						if inputName == "Medium" {
+							conversionFunc = utils.Medium_stoi
+						} else {
+							conversionFunc = utils.Status_stoi
+						}
+						entries := form.GetContents()
+						var convertedContents []int
+						for _, entry := range entries {
+							convertedContents = append(convertedContents, conversionFunc(entry))
+						}
+						content, err = json.Marshal(convertedContents)
 					}
 					if err != nil {
 						log.Fatal("Failed to marshal input data to JSON: ", err)
 					}
 					contents = append(contents, string(content))
 				}
+				date := time.Now().Format(time.UnixDate)
 				if len(os.Getenv("DEBUG")) > 0 {
 					log.Println(contents)
 				}
@@ -131,22 +169,31 @@ func (m *AddModel) Update(msg tea.Msg) (*AddModel, tea.Cmd) {
 				if err != nil {
 					log.Fatal("Failed to prepare insert statement: ", err)
 				}
-				_, err = query.Exec("test_date", contents[0], contents[2], contents[1][0], contents[3], 0, id)
+				statusInt, err := strconv.Atoi(contents[statusForm])
+				_, err = query.Exec(date, contents[titleForm], contents[tagsForm], statusInt, contents[mediumForm], contents[yearForm], id)
 				if err != nil {
 					log.Fatal("Failed to insert to works table: ", err)
 				}
 				query.Close()
 				cmd = func() tea.Msg { return ViewMsg(0) }
 				cmds = tea.Batch(cmds, cmd)
+				clearComponents(m)
 				break
 			}
 			_, cmd = m.forms[m.cursor].Update(msg)
 			cmds = tea.Batch(cmds, cmd)
 			m.focused = true
 		case "esc":
-			_, cmd = m.forms[m.cursor].Update(msg)
-			cmds = tea.Batch(cmds, cmd)
-			m.focused = false
+			if !m.focused {
+				if len(os.Getenv("DEBUG")) > 0 {
+					log.Println("addPage trying to return to main")
+				}
+				cmds = tea.Batch(cmds, func() tea.Msg { return (ViewMsg(0)) })
+			} else if m.cursor < len(m.forms) {
+				_, cmd = m.forms[m.cursor].Update(msg)
+				cmds = tea.Batch(cmds, cmd)
+				m.focused = false
+			}
 		case "j", "down":
 			if m.cursor > len(m.forms)-1 {
 				break

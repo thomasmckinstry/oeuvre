@@ -44,7 +44,8 @@ func GetWorkID(db *sql.DB) int {
 	}
 	err = rows.Scan(&id)
 	if err != nil {
-		log.Fatal("Unable to scan rows for id: ", err)
+		return 0 // TODO: This is a terrible hack for when there are no existing rows. Need to do something about it
+		//log.Fatal("Unable to scan rows for id: ", err)
 	}
 
 	if len(os.Getenv("DEBUG")) > 0 {

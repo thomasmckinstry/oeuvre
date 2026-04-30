@@ -1,12 +1,15 @@
 package partials
 
 import (
+	"database/sql"
+	"encoding/json"
+	"log"
+
 	"charm.land/bubbles/v2/table"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
-	"database/sql"
 	database "github.com/thomasmckinstry/Bubbletea-Tutorial/db"
-	"log"
+	"github.com/thomasmckinstry/Bubbletea-Tutorial/utils"
 )
 
 var db *sql.DB
@@ -27,6 +30,7 @@ func (m ListModel) deselectView() lipgloss.Style {
 func InitialList(width int, height int) ListModel {
 	db = database.GetDB()
 	row, err := db.Query(`SELECT title, media_type, work_status, tags, year_released FROM works;`)
+	defer row.Close()
 	if err != nil {
 		log.Fatal("Failed to query works table for list: ", err)
 	}
@@ -34,23 +38,29 @@ func InitialList(width int, height int) ListModel {
 	var rows []table.Row
 	for row.Next() {
 		var (
-			title  string
-			medium string
-			status string
-			tags   string
-			year   string
+			intStatus int
+			title     string
+			medium    string
+			tags      string
+			year      string
 		)
-		err = row.Scan(&title, &medium, &status, &tags, &year)
+		err = row.Scan(&title, &medium, &intStatus, &tags, &year)
 		if err != nil {
 			log.Fatal("Failed to scan works row: ", err)
 		}
-		rows = append(rows, table.Row{title, medium, status, tags, year})
+		var mediumsArr []int
+		var tagsArr []string
+		err := json.Unmarshal([]byte(medium), &mediumsArr)
+		if err != nil {
+			log.Fatal("Failed to Unmarshal medium: ", err)
+		}
+		err = json.Unmarshal([]byte(tags), &tagsArr)
+		if err != nil {
+			log.Fatal("Failed to Unmarshal medium: ", err)
+		}
+		mediumsStr := utils.ConvertMedium(mediumsArr)
+		rows = append(rows, table.Row{title, mediumsStr, utils.Status_itos(intStatus), utils.GetTagsString(tagsArr), year})
 	}
-
-	/*var rows = []table.Row{ // TODO: Remove this
-		{"I am Your Beast", "Game", "Completed", "Action", "2024"},
-		{"One Battle After Another", "Movie, Live Action", "Pending", "Action", "2025"},
-	}*/
 
 	var columns = []table.Column{
 		{Title: "Title", Width: width / 4},
@@ -109,6 +119,7 @@ func (m ListModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			{Title: "Tags", Width: width / 3},
 			{Title: "Released", Width: width / 6},
 		})
+		m.table.Update(msg)
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "esc":

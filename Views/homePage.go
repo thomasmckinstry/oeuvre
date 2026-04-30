@@ -113,7 +113,7 @@ func (m *HomeModel) Update(msg tea.Msg) (*HomeModel, tea.Cmd) {
 				cmds = tea.Batch(cmds, cmd)
 			}
 		case "enter":
-			if m.sidebarCursor == 0 {
+			if m.sidebarCursor == 0 && m.mainCursor == 0 {
 				if len(os.Getenv("DEBUG")) > 0 {
 					log.Println("homePage sending AddMsg")
 				}

@@ -52,7 +52,7 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case views.ViewMsg:
 		if len(os.Getenv("DEBUG")) > 0 {
-			log.Println("main received AddMsg")
+			log.Println("main received ViewMsg for ", int(msg))
 		}
 		m.cursor = int(msg)
 	case tea.WindowSizeMsg:
