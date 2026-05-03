@@ -32,7 +32,7 @@ func (m *TagInputModel) Clear() {
 
 // TODO: This should be a utils
 func (m TagInputModel) toggleBorder() lipgloss.Style {
-	if m.selected == true {
+	if m.selected {
 		return m.tagsStyle.BorderForeground(lipgloss.Color("#6E3F00"))
 	}
 	return m.tagsStyle.BorderForeground(lipgloss.Color("#D17600"))
