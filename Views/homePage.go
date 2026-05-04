@@ -9,17 +9,7 @@ import (
 	"os"
 )
 
-var (
-	height int
-
-// rows    []table.Row
-// columns []table.Column
-)
-
-//type ViewModel interface {
-//	selectView()
-//	deselectView()
-//}
+var height int
 
 type HomeModel struct {
 	sidebarCursor int
@@ -126,7 +116,7 @@ func (m *HomeModel) Update(msg tea.Msg) (*HomeModel, tea.Cmd) {
 					}
 				}
 			}
-		default: // TODO: Eventually this should also default to sending messages to the list
+		default:
 			_, cmd = m.sidebarViews[m.sidebarCursor].Update(msg)
 			cmds = tea.Batch(cmds, cmd)
 			if cmd != nil {
@@ -139,11 +129,6 @@ func (m *HomeModel) Update(msg tea.Msg) (*HomeModel, tea.Cmd) {
 		}
 	}
 
-	// Return the updated model to the Bubble Tea runtime for processing.
-	// Note that we're not returning a command.
-	if len(os.Getenv("DEBUG")) > 0 {
-		log.Println("homePage sending cmds", cmds)
-	}
 	return m, cmds
 }
 

@@ -30,7 +30,6 @@ func (m *CheckboxModel) GetContents() []string {
 		if entry {
 			contents = append(contents, m.entries[i])
 		}
-
 	}
 	return contents
 }

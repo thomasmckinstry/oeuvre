@@ -7,9 +7,6 @@ import (
 	"github.com/thomasmckinstry/MediaLogger-TUI/Views/Components"
 	database "github.com/thomasmckinstry/MediaLogger-TUI/db"
 	"github.com/thomasmckinstry/MediaLogger-TUI/utils"
-	"log"
-	"os"
-	"strconv"
 	"time"
 )
 
@@ -32,8 +29,6 @@ type AddModel struct {
 	headerStyle    lipgloss.Style
 	textinputStyle lipgloss.Style
 	enterStyle     lipgloss.Style
-
-	errorMsg string
 }
 
 func clearComponents(m *AddModel) {
@@ -64,18 +59,11 @@ func InitialAddModel(width int) *AddModel {
 	var tagSuggestions []string
 	db := database.GetDB()
 	rows, err := db.Query(`SELECT * FROM tags_table`)
-	if err != nil {
-		log.Fatal("Failed to query tags from database: ", err)
-	}
+	utils.CheckError("Failed to query tags from database: ", err)
 	for rows.Next() {
 		var tag string
 		err = rows.Scan(&tag)
-		if len(os.Getenv("DEBUG")) > 0 {
-			log.Println("Got tag of length: ", len(tag))
-		}
-		if err != nil {
-			log.Fatal("Failed to scan tags: ", err)
-		}
+		utils.CheckError("Failed to scan tags: ", err)
 		tagSuggestions = append(tagSuggestions, tag)
 	}
 	err = rows.Close()
@@ -114,12 +102,8 @@ func (m *AddModel) Init() tea.Cmd {
 }
 
 func (m *AddModel) Update(msg tea.Msg) (*AddModel, tea.Cmd) {
-	if len(os.Getenv("DEBUG")) > 0 {
-		log.Println("AddPage got: ", msg)
-	}
 	var cmds tea.Cmd
 	var cmd tea.Cmd
-	m.errorMsg = ""
 
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
@@ -130,48 +114,44 @@ func (m *AddModel) Update(msg tea.Msg) (*AddModel, tea.Cmd) {
 		case "enter":
 			if m.cursor == len(m.forms) {
 				var contents []string
-				var content []byte
+				var content string
 				var err error
 				for _, form := range m.forms {
 					switch form := form.(type) {
 					case *components.TextInputModel:
-						content = []byte(form.GetContents())
+						content = string(form.GetContents())
 					case *components.TagInputModel:
-						content, err = json.Marshal(form.GetContents())
+						marshaledContent, err := json.Marshal(form.GetContents())
+						utils.CheckError("Failed to marshal input data to JSON: ", err)
+						content = string(marshaledContent)
 					case *components.CheckboxModel:
 						inputName := form.Title
-						var conversionFunc func(string) int
 						if inputName == "Medium" {
-							conversionFunc = utils.Medium_stoi
+							entries := form.GetContents()
+							var convertedContents []int
+							for _, entry := range entries {
+								convertedContents = append(convertedContents, utils.Medium_stoi(entry))
+							}
+							marshaledContent, err := json.Marshal(convertedContents)
+							utils.CheckError("Failed to marshal input data to JSON: ", err)
+							content = string(marshaledContent)
 						} else {
-							conversionFunc = utils.Status_stoi
+							content = form.GetContents()[0]
 						}
-						entries := form.GetContents()
-						var convertedContents []int
-						for _, entry := range entries {
-							convertedContents = append(convertedContents, conversionFunc(entry))
-						}
-						content, err = json.Marshal(convertedContents)
 					}
-					if err != nil {
-						log.Fatal("Failed to marshal input data to JSON: ", err)
-					}
+					utils.CheckError("Failed to marshal input data to JSON: ", err)
 					contents = append(contents, string(content))
 				}
+				utils.DebugLog("Inserting to db: ", contents)
+
 				date := time.Now().Format(time.UnixDate)
-				if len(os.Getenv("DEBUG")) > 0 {
-					log.Println(contents)
-				}
-				db := database.GetDB() //  TODO: Move this shit (whole block) into a function
-				//id := database.GetWorkID(db)
+				db := database.GetDB()
 				query, err := db.Prepare(`
 					INSERT INTO works (date_added, title, media_type, work_status, tags, year_released)
 					VALUES (?, ?, ?, ?, ?, ?)
 				`)
-				if err != nil {
-					log.Fatal("Failed to prepare insert statement: ", err)
-				}
-				statusInt, err := strconv.Atoi(contents[statusForm])
+				utils.CheckError("Failed to prepare insert statement: ", err)
+				statusInt := int(contents[statusForm][0])
 				utils.CheckError("Failed to convert string to int: ", err)
 				_, err = query.Exec(date, contents[titleForm], contents[tagsForm], statusInt, contents[mediumForm], contents[yearForm])
 				utils.CheckError("Failed to insert to works table: ", err)
@@ -187,9 +167,6 @@ func (m *AddModel) Update(msg tea.Msg) (*AddModel, tea.Cmd) {
 			m.focused = true
 		case "esc":
 			if !m.focused {
-				if len(os.Getenv("DEBUG")) > 0 {
-					log.Println("addPage trying to return to main")
-				}
 				clearComponents(m)
 				cmds = tea.Batch(cmds, func() tea.Msg { return (ViewMsg(0)) })
 			} else if m.cursor < len(m.forms) {
