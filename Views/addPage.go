@@ -11,14 +11,6 @@ import (
 	"time"
 )
 
-const (
-	titleForm int = iota
-	yearForm
-	mediumForm
-	tagsForm
-	statusForm
-)
-
 type AddKeyMap struct {
 	Up      key.Binding
 	Down    key.Binding
@@ -139,16 +131,22 @@ func (m *AddModel) Update(msg tea.Msg) (*AddModel, tea.Cmd) {
 	case tea.KeyMsg:
 		switch {
 		case key.Matches(msg, DefaultAddKeyMap.Focus):
-			if m.cursor == len(m.forms) {
-				var contents []string
-				var content string
-				var err error
+			if m.cursor == utils.EnterForm {
+				var (
+					contents []string
+					content  string
+					tags     []string
+					err      error
+				)
+
+				// PREPPING DATA FOR ENTRY TO DB
 				for _, form := range m.forms {
 					switch form := form.(type) {
 					case *components.TextInputModel:
 						content = string(form.GetContents())
 					case *components.TagInputModel:
-						marshaledContent, err := json.Marshal(form.GetContents())
+						tags = form.GetContents()
+						marshaledContent, err := json.Marshal(tags)
 						utils.CheckError("Failed to marshal input data to JSON: ", err)
 						content = string(marshaledContent)
 					case *components.CheckboxModel:
@@ -166,23 +164,35 @@ func (m *AddModel) Update(msg tea.Msg) (*AddModel, tea.Cmd) {
 					utils.CheckError("Failed to marshal input data to JSON: ", err)
 					contents = append(contents, string(content))
 				}
-				utils.DebugLog("Inserting to db: ", contents)
-
 				date := time.Now().Format(time.UnixDate)
+
+				// ADDING TO DATABASE
 				db := database.GetDB()
+
 				query, err := db.Prepare(`
 					INSERT INTO works (date_added, title, media_type, work_status, tags, year_released)
 					VALUES (?, ?, ?, ?, ?, ?)
 				`)
 				utils.CheckError("Failed to prepare insert statement: ", err)
-				statusInt := int(contents[statusForm][0])
+				statusInt := int(contents[utils.StatusForm][0])
 				utils.CheckError("Failed to convert string to int: ", err)
-				_, err = query.Exec(date, contents[titleForm], contents[tagsForm], statusInt, contents[mediumForm], contents[yearForm])
+				_, err = query.Exec(date, contents[utils.TitleForm], contents[utils.MediumForm], statusInt, contents[utils.TagsForm], contents[utils.YearForm])
 				utils.CheckError("Failed to insert to works table: ", err)
 				err = query.Close()
+
+				query, err = db.Prepare(`
+				 INSERT OR REPLACE INTO tags_table (tag_name)
+				 VALUES (?)
+				`)
+				utils.CheckError("Failed to prepare insert statement: ", err)
+				for _, tag := range tags {
+					_, err = query.Exec(tag)
+				}
+				err = query.Close()
+
 				utils.CheckError("Failed to close insert to works table: ", err)
-				cmd = func() tea.Msg { return ViewMsg(0) }
-				cmds = tea.Batch(cmds, cmd)
+				cmds = tea.Batch(cmds, func() tea.Msg { return ViewMsg(0) })
+				cmds = tea.Batch(cmds, func() tea.Msg { return utils.NewWorkMsg(contents) })
 				clearComponents(m)
 				break
 			}

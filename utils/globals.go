@@ -4,6 +4,8 @@ import "strings"
 
 type NavMsg bool
 
+type NewWorkMsg []string
+
 // TODO: Define these with reading from the db
 const (
 	Pending int = iota
@@ -11,6 +13,15 @@ const (
 	Hiatus
 	Completed
 	Dropped
+)
+
+const ( // Order that the forms are in
+	TitleForm int = iota
+	YearForm
+	TagsForm
+	MediumForm
+	StatusForm
+	EnterForm
 )
 
 const ( // Sort Option

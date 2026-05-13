@@ -61,14 +61,6 @@ func (m *TagInputModel) Clear() {
 	m.textInput.Reset()
 }
 
-// TODO: This should be a utils
-func (m TagInputModel) toggleBorder() lipgloss.Style {
-	if m.selected {
-		return m.tagsStyle.BorderForeground(lipgloss.Color("#6E3F00"))
-	}
-	return m.tagsStyle.BorderForeground(lipgloss.Color("#D17600"))
-}
-
 func (m *TagInputModel) GetContents() []string {
 	return m.tags
 }
@@ -121,14 +113,12 @@ func (m *TagInputModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if m.textInput.Focused() {
 				m.textInput.Blur()
 			} else if m.selected {
-				m.tagsStyle = m.toggleBorder()
 				m.selected = false
 			}
 			cmd = func() tea.Msg { return utils.NavMsg(!m.selected) }
 			cmds = tea.Batch(cmds, cmd)
 		case key.Matches(msg, defaultTagMap.Confirm): // Add a tag from the current text input and empty the text input OR focus the component
 			if !m.selected {
-				m.tagsStyle = m.toggleBorder()
 				m.selected = true
 			} else if m.selected && !m.textInput.Focused() {
 				m.textInput.Focus()
@@ -180,6 +170,17 @@ func (m *TagInputModel) View() tea.View {
 
 	s = lipgloss.JoinVertical(lipgloss.Left, s, m.textInput.View())
 
+	var wrapTags lipgloss.Style
+	if m.selected && !m.textInput.Focused() {
+		wrapTags = m.tagsStyle.BorderForeground(lipgloss.Color("#D17600"))
+	} else {
+		wrapTags = m.tagsStyle
+	}
+
+	if len(m.tags) == 0 {
+		s = lipgloss.JoinVertical(lipgloss.Left, s, wrapTags.Render())
+	}
+
 	for index, tag := range m.tags {
 		tagStr := ""
 		if tag == "" {
@@ -189,13 +190,12 @@ func (m *TagInputModel) View() tea.View {
 		if index == m.tagsCursor && !m.textInput.Focused() && m.selected { // Color selected field
 			tagStr = m.tagStyle.Render(tagStr)
 		}
+
 		if index == 0 {
-			tagStr = m.tagsStyle.Render(tagStr)
+			tagStr = wrapTags.Render(tagStr)
 		}
+
 		s = lipgloss.JoinVertical(lipgloss.Left, s, tagStr)
-	}
-	if len(m.tags) == 0 {
-		s = lipgloss.JoinVertical(lipgloss.Left, s, m.tagsStyle.Render())
 	}
 	v := tea.NewView(s)
 	v.Cursor = c

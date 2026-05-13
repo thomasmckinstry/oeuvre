@@ -11,9 +11,9 @@ import (
 	"charm.land/lipgloss/v2"
 	database "github.com/thomasmckinstry/MediaLogger-TUI/db"
 	"github.com/thomasmckinstry/MediaLogger-TUI/utils"
-	"os"
 	"slices"
 	"sort"
+	"strconv"
 	"strings"
 )
 
@@ -66,6 +66,7 @@ func InitialList(width int, height int) ListModel {
 		if err != nil {
 			log.Fatal("Failed to scan works row: ", err)
 		}
+		utils.DebugLog("Scanned row: ", []string{title, medium, tags, year, string(intStatus)})
 		var mediumsArr []int
 		var tagsArr []string
 		err := json.Unmarshal([]byte(medium), &mediumsArr)
@@ -74,7 +75,7 @@ func InitialList(width int, height int) ListModel {
 		}
 		err = json.Unmarshal([]byte(tags), &tagsArr)
 		if err != nil {
-			log.Fatal("Failed to Unmarshal medium: ", err)
+			log.Fatal("Failed to Unmarshal tags: ", err)
 		}
 		mediumsStr := utils.ConvertMedium(mediumsArr)
 		rows = append(rows, table.Row{title, utils.GetTagsString(tagsArr), mediumsStr, utils.Status_itos(intStatus), year})
@@ -128,8 +129,26 @@ func (m ListModel) Init() tea.Cmd {
 
 func (m *ListModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
-	utils.DebugLog("List got: ", msg)
 	switch msg := msg.(type) {
+	case utils.NewWorkMsg:
+		utils.DebugLog("List got NewWorkMsg: ", msg)
+		newRow := []string(msg)
+		rows := m.table.Rows()
+		var mediumsArr []int
+		var tagsArr []string
+		err := json.Unmarshal([]byte(newRow[utils.MediumForm]), &mediumsArr)
+		if err != nil {
+			utils.DebugLog("Medium: ", newRow[utils.MediumForm])
+			log.Fatal("Failed to Unmarshal medium: ", err)
+		}
+		err = json.Unmarshal([]byte(newRow[utils.TagsForm]), &tagsArr)
+		if err != nil {
+			log.Fatal("Failed to Unmarshal tags: ", err)
+		}
+		intStatus, _ := strconv.Atoi(newRow[utils.StatusForm])
+		mediumsStr := utils.ConvertMedium(mediumsArr)
+		rows = append(rows, table.Row{newRow[utils.TitleForm], utils.GetTagsString(tagsArr), mediumsStr, utils.Status_itos(intStatus), newRow[utils.YearForm]})
+		m.table.SetRows(rows)
 	case tea.WindowSizeMsg:
 		m.style = m.style.Height(msg.Height).Width(msg.Width - 18)
 		width := msg.Width - 29
@@ -161,16 +180,9 @@ func (m *ListModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	case SortMsg:
 		rows := m.table.Rows()
-		if len(os.Getenv("DEBUG")) > 0 {
-			log.Println("List got sortmsg: ", int(msg))
-			log.Println("Pre-sort: ", rows)
-		}
 		sort.Slice(rows, func(i, j int) bool {
 			return rows[i][int(msg)] < rows[j][int(msg)]
 		})
-		if len(os.Getenv("DEBUG")) > 0 {
-			log.Println("Post-sort: ", rows)
-		}
 		m.table.SetRows(rows)
 	case FilterMsg:
 		var rows []table.Row

@@ -100,7 +100,8 @@ func (m *HomeModel) Update(msg tea.Msg) (*HomeModel, tea.Cmd) {
 	var cmds tea.Cmd
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
-
+	case utils.NewWorkMsg:
+		_, cmd = m.listModel.Update(msg)
 	case tea.WindowSizeMsg:
 		_, cmd = m.listModel.Update(msg)
 		cmds = tea.Batch(cmds, cmd)

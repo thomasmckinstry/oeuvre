@@ -137,11 +137,6 @@ func (m *FilterModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.height = msg.Height - 7
 	case tea.KeyMsg:
 		switch {
-		case key.Matches(msg, filterDefaultMap.Nav):
-			cmd = func() tea.Msg { return utils.NavMsg(!m.focused) }
-			utils.DebugLog("Filter Nav: ", !m.focused)
-			cmds = tea.Batch(cmds, cmd)
-			fallthrough
 		case key.Matches(msg, filterDefaultMap.Confirm):
 			if m.cursor == len(m.forms) { // Cursor on enter button
 				var contents [][]string
@@ -198,11 +193,16 @@ func (m *FilterModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.cursor--
 				_, cmd = m.forms[m.cursor].Update(msg)
 			}
+		case key.Matches(msg, filterDefaultMap.Nav):
+			cmd = func() tea.Msg { return utils.NavMsg(!m.focused) }
+			utils.DebugLog("Filter Nav: ", !m.focused)
+			cmds = tea.Batch(cmds, cmd)
+			fallthrough
 		default:
 			_, cmd = m.forms[m.cursor].Update(msg)
 		}
 	}
-	return m, cmd
+	return m, cmds
 }
 
 func (m *FilterModel) View() tea.View {

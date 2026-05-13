@@ -50,6 +50,8 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds tea.Cmd
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
+	case utils.NewWorkMsg:
+		_, cmd = m.homeModel.Update(msg)
 	case views.ViewMsg:
 		if len(os.Getenv("DEBUG")) > 0 {
 			log.Println("main received ViewMsg for ", int(msg))
