@@ -189,7 +189,7 @@ func (m *HomeModel) View() tea.View {
 	sidebarContent := []string{}
 	for i, form := range m.sidebarViews {
 		formView := form.View()
-		if i == m.sidebarCursor {
+		if i == m.sidebarCursor && m.mainCursor == 0 {
 			sidebarContent = append(sidebarContent, m.formStyle.BorderForeground(lipgloss.Color("#D17600")).Render(formView.Content))
 		} else {
 			sidebarContent = append(sidebarContent, m.formStyle.Render(formView.Content))
