@@ -169,7 +169,9 @@ func (m *WorkPageModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				_, cmd = m.work.Update(msg)
 			}
 		case key.Matches(msg, defaultWorkMap.TopLevelLeft):
-			if m.mainCursor > work && !m.writing {
+			if m.rightCursor == display {
+				m.mainCursor = 0
+			} else if m.mainCursor > work && !m.writing {
 				m.mainCursor--
 				_, cmd = m.work.Update(msg)
 				cmds = tea.Batch(cmds, cmd)
@@ -249,8 +251,11 @@ func (m *WorkPageModel) View() tea.View {
 	workView := m.work.View()
 	c = workView.Cursor
 	details := workView.Content
-	isFocused := m.mainCursor == work
-	details = renderFocused(m.detailsStyle, details, isFocused)
+	isFocused := m.focused
+	details = renderFocused(m.tabsStyle, details, isFocused)
+
+	isSelected := m.mainCursor == work
+	details = renderFocused(m.detailsStyle, details, isSelected)
 
 	s = lipgloss.JoinHorizontal(lipgloss.Top, s, details)
 
