@@ -49,7 +49,7 @@ type WorkFormModel struct {
 	enterStyle     lipgloss.Style
 }
 
-func clearComponents(m *WorkFormModel) {
+func ClearComponents(m *WorkFormModel) {
 	if m.cursor == len(m.forms) {
 		m.enterStyle = m.enterStyle.BorderForeground(lipgloss.Color("#6E3F00"))
 	}
@@ -120,8 +120,7 @@ func (m *WorkFormModel) Update(msg tea.Msg) (*WorkFormModel, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
-		//m.style = m.style.Height(msg.Height - (7))
-		m.height = msg.Height - 7
+		m.height = msg.Height
 	case WorkDetails:
 		details := []string(msg)
 		for i, form := range m.forms {
@@ -208,7 +207,6 @@ func (m *WorkFormModel) Update(msg tea.Msg) (*WorkFormModel, tea.Cmd) {
 				CheckError("Failed to close insert to works table: ", err)
 				cmds = tea.Batch(cmds, func() tea.Msg { return ViewMsg(0) })
 				cmds = tea.Batch(cmds, func() tea.Msg { return NewWorkMsg(contents) })
-				clearComponents(m)
 				break
 			}
 			_, cmd = m.forms[m.cursor].Update(msg)
@@ -216,7 +214,6 @@ func (m *WorkFormModel) Update(msg tea.Msg) (*WorkFormModel, tea.Cmd) {
 			m.focused = true
 		case key.Matches(msg, DefaultWorkFormKeyMap.Unfocus):
 			if !m.focused {
-				clearComponents(m)
 				cmds = tea.Batch(cmds, func() tea.Msg { return (ViewMsg(0)) })
 			} else if m.cursor < len(m.forms) {
 				_, cmd = m.forms[m.cursor].Update(msg)

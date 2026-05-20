@@ -18,7 +18,8 @@ func init_db(db *sql.DB) {
 	work_status integer NOT NULL DEFAULT 0,
 	tags text, -- Marshalled array
 	year_released integer NOT NULL,
-	work_id integer PRIMARY KEY -- Need work_id to specify between adaptations with the same title (ex. Running Man movie v. Running Man book)
+	work_id integer UNIQUE -- Need work_id to specify between adaptations with the same title (ex. Running Man movie v. Running Man book)
+	PRIMARY KEY (title, media_type)
 );
 	`)
 	if err != nil {

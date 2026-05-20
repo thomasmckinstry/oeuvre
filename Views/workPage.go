@@ -96,6 +96,8 @@ func InitialWorkPage(width, height int) *WorkPageModel {
 	workForm := components.InitialWorkFormModel(22, height)
 
 	ti := textarea.New()
+	ti.SetWidth(width - 1)
+	ti.SetHeight(height - 5)
 	ti.SetVirtualCursor(false)
 	ti.SetStyles(textarea.DefaultStyles(true)) // default to dark styles.
 
@@ -148,9 +150,11 @@ func (m *WorkPageModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
-		_, cmd = m.work.Update(msg)
+		m.work, cmd = m.work.Update(msg)
 		m.width = msg.Width
 		m.height = msg.Height
+		m.textArea.SetWidth(msg.Width - 1)
+		m.textArea.SetHeight(msg.Height - 5)
 	case WorkDetails:
 		m.notes = []entry{}
 		m.reviews = []entry{}
@@ -179,7 +183,7 @@ func (m *WorkPageModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				id            int
 			)
 			err = row.Scan(&date, &content, &id)
-			DebugLog("Scanned note: ", content)
+			DebugLog("Scanned note: ", date)
 			if err != nil {
 				log.Fatal("Failed to scan works row: ", err)
 			}
@@ -236,7 +240,7 @@ func (m *WorkPageModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.textArea.Reset()
 				m.writingCursor = 0
 
-			} else if m.rightCursor == 1 {
+			} else if m.rightCursor == 1 && m.mainCursor != work {
 				m.writing = true
 				m.writingMode = "EDIT"
 				if m.tabCursor == 0 {
@@ -355,12 +359,16 @@ func (m *WorkPageModel) View() tea.View {
 
 	workView := m.work.View()
 	c = workView.Cursor
+	if c != nil {
+		c.Y += 1
+		c.X += 1
+	}
 	details := workView.Content
 	isFocused := m.focused
 	details = renderFocused(m.tabsStyle, details, isFocused)
 
 	isSelected := m.mainCursor == work
-	details = renderFocused(m.detailsStyle, details, isSelected)
+	details = renderFocused(m.detailsStyle.Height(m.height), details, isSelected)
 
 	s = lipgloss.JoinHorizontal(lipgloss.Top, s, details)
 
@@ -382,16 +390,31 @@ func (m *WorkPageModel) View() tea.View {
 
 	headerContent = lipgloss.JoinHorizontal(lipgloss.Top, tabsContent, headerContent)
 
-	var displayContent string
-	var entry entry
+	var displayContent, position string
+	var currEntry entry
+	var hasEntry bool
 	if m.tabCursor == 0 && len(m.notes) > 0 {
-		entry = m.notes[m.entryCursor]
-	} else if len(m.reviews) > 0 {
-		entry = m.reviews[m.entryCursor]
+		currEntry = m.notes[m.entryCursor]
+		hasEntry = true
+		position = lipgloss.PlaceVertical(m.height-11, lipgloss.Bottom, strconv.Itoa(m.entryCursor+1)+"/"+strconv.Itoa(len(m.notes)))
+	} else if m.tabCursor == 1 && len(m.reviews) > 0 {
+		currEntry = m.reviews[m.entryCursor]
+		hasEntry = true
+		position = lipgloss.PlaceVertical(m.height-11, lipgloss.Bottom, strconv.Itoa(m.entryCursor+1)+"/"+strconv.Itoa(len(m.reviews)))
 	}
-	displayContent = lipgloss.JoinVertical(lipgloss.Right, entry.date, m.buttonStyle.Render("EDIT"), m.buttonStyle.Render("DELETE"))
-	content := lipgloss.PlaceHorizontal(m.width-(lipgloss.Width(displayContent)+31), lipgloss.Left, m.entryContentStyle.Width(m.width-(lipgloss.Width(displayContent)+31)).Render(entry.content))
-	displayContent = lipgloss.JoinHorizontal(lipgloss.Top, content, displayContent)
+
+	if hasEntry {
+		var date string
+		if currEntry.date != "" {
+			date = currEntry.date[:10]
+		}
+		displayContent = lipgloss.JoinVertical(lipgloss.Right, date, m.buttonStyle.Render("EDIT"), m.buttonStyle.Render("DELETE"), position)
+		content := lipgloss.PlaceHorizontal(m.width-(lipgloss.Width(displayContent)+31), lipgloss.Left, m.entryContentStyle.Width(m.width-(lipgloss.Width(displayContent)+31)).Render(currEntry.content))
+		displayContent = lipgloss.JoinHorizontal(lipgloss.Top, content, displayContent)
+	} else {
+		displayContent = lipgloss.PlaceHorizontal(m.width-31, lipgloss.Center, "NO "+tabsArr[m.tabCursor])
+		displayContent = lipgloss.PlaceVertical(m.height-4, lipgloss.Center, displayContent)
+	}
 	isFocused = m.mainCursor > work && m.rightCursor == display
 	displayContent = renderFocused(m.displayStyle, displayContent, isFocused)
 

@@ -38,7 +38,7 @@ type model struct {
 
 func initialModel() model {
 	homeAddr := views.InitialHome(width, height)
-	addAddr := views.InitialAddModel(22, height-5)
+	addAddr := views.InitialAddModel(width, height)
 	workAddr := views.InitialWorkPage(width, height)
 	return model{
 		homeModel:     homeAddr,
@@ -64,6 +64,7 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if len(os.Getenv("DEBUG")) > 0 {
 			log.Println("main received ViewMsg for ", int(msg))
 		}
+		m.addModel, _ = m.addModel.Update(msg)
 		m.cursor = int(msg)
 	case tea.WindowSizeMsg:
 		switch m.cursor {
