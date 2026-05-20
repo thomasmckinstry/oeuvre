@@ -8,7 +8,6 @@ import (
 	database "github.com/thomasmckinstry/MediaLogger-TUI/db"
 	. "github.com/thomasmckinstry/MediaLogger-TUI/utils"
 	"strings"
-	"time"
 )
 
 type WorkFormMap struct {
@@ -37,6 +36,8 @@ var DefaultWorkFormKeyMap = WorkFormMap{
 	),
 }
 
+type WorkValuesMsg []string
+
 type WorkFormModel struct {
 	headerText     string
 	focused        bool
@@ -49,7 +50,7 @@ type WorkFormModel struct {
 	enterStyle     lipgloss.Style
 }
 
-func ClearComponents(m *WorkFormModel) {
+func (m *WorkFormModel) ClearComponents() {
 	if m.cursor == len(m.forms) {
 		m.enterStyle = m.enterStyle.BorderForeground(lipgloss.Color("#6E3F00"))
 	}
@@ -178,34 +179,6 @@ func (m *WorkFormModel) Update(msg tea.Msg) (*WorkFormModel, tea.Cmd) {
 					CheckError("Failed to marshal input data to JSON: ", err)
 					contents = append(contents, string(content))
 				}
-				date := time.Now().Format(time.UnixDate)
-
-				// ADDING TO DATABASE
-				db := database.GetDB()
-
-				query, err := db.Prepare(`
-					INSERT OR REPLACE INTO works (date_added, title, media_type, work_status, tags, year_released)
-					VALUES (?, ?, ?, ?, ?, ?)
-				`)
-				CheckError("Failed to prepare insert statement: ", err)
-				statusInt := int(contents[StatusForm][0])
-				CheckError("Failed to convert string to int: ", err)
-				_, err = query.Exec(date, contents[TitleForm], contents[MediumForm], statusInt, contents[TagsForm], contents[YearForm])
-				CheckError("Failed to insert to works table: ", err)
-				err = query.Close()
-
-				query, err = db.Prepare(`
-				 INSERT OR REPLACE INTO tags_table (tag_name)
-				 VALUES (?)
-				`)
-				CheckError("Failed to prepare insert statement: ", err)
-				for _, tag := range tags {
-					_, err = query.Exec(tag)
-				}
-				err = query.Close()
-
-				CheckError("Failed to close insert to works table: ", err)
-				cmds = tea.Batch(cmds, func() tea.Msg { return ViewMsg(0) })
 				cmds = tea.Batch(cmds, func() tea.Msg { return NewWorkMsg(contents) })
 				break
 			}
@@ -224,7 +197,7 @@ func (m *WorkFormModel) Update(msg tea.Msg) (*WorkFormModel, tea.Cmd) {
 				}
 			}
 		case key.Matches(msg, DefaultWorkFormKeyMap.Down):
-			if m.cursor > len(m.forms)-1 {
+			if m.cursor >= len(m.forms) {
 				break
 			}
 			_, cmd = m.forms[m.cursor].Update(msg)

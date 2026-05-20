@@ -250,6 +250,41 @@ func (m *WorkPageModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 			} else if m.mainCursor == work {
 				m.work, cmd = m.work.Update(msg)
+				var ok bool
+				var workMsg []string
+				if cmd != nil {
+					workMsg, ok = cmd().(NewWorkMsg)
+				}
+				if ok {
+					DebugLog("addPage got NewWorkMsg: ", msg)
+					// ADDING TO DATABASE
+					db := database.GetDB()
+					date := time.Now().Format(time.UnixDate)
+
+					query, err := db.Prepare(`
+					INSERT OR REPLACE INTO works (date_added, title, media_type, work_status, tags, year_released, work_id)
+					VALUES (?, ?, ?, ?, ?, ?, ?)
+				`)
+					CheckError("Failed to prepare insert statement: ", err)
+					statusInt := int(workMsg[StatusForm][0])
+					CheckError("Failed to convert string to int: ", err)
+					_, err = query.Exec(date, workMsg[TitleForm], workMsg[MediumForm], statusInt, workMsg[TagsForm], workMsg[YearForm], m.currWorkId)
+					CheckError("Failed to insert to works table: ", err)
+					err = query.Close()
+
+					query, err = db.Prepare(`
+				 INSERT OR REPLACE INTO tags_table (tag_name)
+				 VALUES (?)
+				`)
+					CheckError("Failed to prepare insert statement: ", err)
+					for _, tag := range workMsg[TagsForm] {
+						_, err = query.Exec(tag)
+					}
+					err = query.Close()
+
+					CheckError("Failed to close insert to works table: ", err)
+				}
+				cmd = nil
 			}
 			cmds = tea.Batch(cmds, cmd)
 		case key.Matches(msg, defaultWorkMap.Exit):

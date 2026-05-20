@@ -95,6 +95,7 @@ func (m *CheckboxModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			} else {
 				m.EntryVals[m.cursor] = !m.EntryVals[m.cursor]
 			}
+			cmd = func() tea.Msg { return utils.NavMsg(!m.selected) }
 		case key.Matches(msg, defaultCheckboxMap.Down): // Nav between tags
 			if m.cursor < len(m.entries)-1 && m.selected {
 				m.cursor++

@@ -126,6 +126,8 @@ func (m *TagInputModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.Tags = append(m.Tags, m.textInput.Value())
 				m.textInput.Reset()
 			}
+			cmd = func() tea.Msg { return utils.NavMsg(!m.selected) }
+			cmds = tea.Batch(cmds, cmd)
 		case key.Matches(msg, defaultTagMap.Down): // Nav between tags
 			if m.tagsCursor < len(m.Tags)-1 && !m.textInput.Focused() && m.selected {
 				m.tagsCursor++
