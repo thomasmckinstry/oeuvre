@@ -30,6 +30,8 @@ type WorkPageModel struct {
 	width, height     int
 	tabCursor         int
 	mainCursor        int
+	notesCursor       int
+	reviewsCursor     int
 	entryCursor       int
 	rightCursor       int
 	writingCursor     int
@@ -40,6 +42,7 @@ type WorkPageModel struct {
 	displayStyle      lipgloss.Style
 	entryContentStyle lipgloss.Style
 	detailsStyle      lipgloss.Style
+	arrowStyle        lipgloss.Style
 }
 
 type workKeyMap struct {
@@ -48,6 +51,8 @@ type workKeyMap struct {
 	TopLevelLeft  key.Binding
 	TopLevelRight key.Binding
 	Confirm       key.Binding
+	Up            key.Binding
+	Down          key.Binding
 	Left          key.Binding
 	Right         key.Binding
 	Exit          key.Binding
@@ -57,7 +62,13 @@ const (
 	work int = iota
 	tabs
 	add
+	del
 	mainCursorCount
+)
+
+const (
+	note int = iota
+	review
 )
 
 const (
@@ -68,11 +79,6 @@ const (
 
 var writeHeader = []string{"NOTE", "REVIEW"}
 
-var (
-	unfocused = lipgloss.Color("#6E3F00")
-	focused   = lipgloss.Color("#D17600")
-)
-
 var defaultWorkMap = workKeyMap{
 	TopLevelUp:    key.NewBinding(key.WithKeys("K")),
 	TopLevelDown:  key.NewBinding(key.WithKeys("J")),
@@ -80,16 +86,20 @@ var defaultWorkMap = workKeyMap{
 	TopLevelRight: key.NewBinding(key.WithKeys("L")),
 	Left:          key.NewBinding(key.WithKeys("h", "left")),
 	Right:         key.NewBinding(key.WithKeys("l", "right")),
+	Up:            key.NewBinding(key.WithKeys("k", "up")),
+	Down:          key.NewBinding(key.WithKeys("j", "down")),
 	Confirm:       key.NewBinding(key.WithKeys("enter")),
 	Exit:          key.NewBinding(key.WithKeys("esc")),
 }
 
-func renderFocused(style lipgloss.Style, content string, isFocused bool) string {
-	if isFocused {
-		return style.BorderForeground(focused).Render(content)
-	} else {
-		return style.Render(content)
-	}
+func (m *WorkPageModel) resetCursors() {
+	m.tabCursor = 0
+	m.mainCursor = 0
+	m.entryCursor = 0
+	m.rightCursor = 0
+	m.writingCursor = 0
+	m.displayCursor = 0
+
 }
 
 func InitialWorkPage(width, height int) *WorkPageModel {
@@ -109,30 +119,33 @@ func InitialWorkPage(width, height int) *WorkPageModel {
 		tabStyle: lipgloss.NewStyle().
 			BorderStyle(lipgloss.NormalBorder()).
 			BorderBottom(true).
-			BorderForeground(unfocused),
+			BorderForeground(Unfocused),
 		tabsStyle: lipgloss.NewStyle().
 			BorderStyle(lipgloss.NormalBorder()).
 			BorderTop(true).
 			MarginLeft(1).
 			MarginRight(1).
-			BorderForeground(unfocused),
+			BorderForeground(Unfocused),
 		detailsStyle: lipgloss.NewStyle().
 			BorderStyle(lipgloss.NormalBorder()).
 			BorderRight(true).
 			MarginRight(1).
-			BorderForeground(unfocused),
+			BorderForeground(Unfocused),
 		buttonStyle: lipgloss.NewStyle().
 			PaddingLeft(2).
 			PaddingRight(2).
 			BorderStyle(lipgloss.DoubleBorder()).
-			BorderForeground(unfocused),
+			BorderForeground(Unfocused),
 		displayStyle: lipgloss.NewStyle().
 			BorderStyle(lipgloss.DoubleBorder()).
-			PaddingRight(1).
 			BorderTop(true).
-			BorderForeground(unfocused),
+			BorderForeground(Unfocused),
 		entryContentStyle: lipgloss.NewStyle().
 			MarginRight(1),
+		arrowStyle: lipgloss.NewStyle().
+			PaddingLeft(1).
+			PaddingRight(1).
+			Foreground(Unfocused),
 	}
 }
 
@@ -183,7 +196,6 @@ func (m *WorkPageModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				id            int
 			)
 			err = row.Scan(&date, &content, &id)
-			DebugLog("Scanned note: ", date)
 			if err != nil {
 				log.Fatal("Failed to scan works row: ", err)
 			}
@@ -222,11 +234,11 @@ func (m *WorkPageModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					}
 				} else {
 					if m.tabCursor == 0 {
-						query, err = db.Prepare(`REPLACE INTO notes (date_added, note_text, work_id, review_id) VALUES (?, ?, ?, ?)`)
-						m.notes[m.entryCursor] = entry{content: content, date: date, id: m.notes[m.entryCursor].id}
+						query, err = db.Prepare(`REPLACE INTO notes (date_added, note_text, work_id, note_id) VALUES (?, ?, ?, ?)`)
+						m.notes[m.notesCursor] = entry{content: content, date: date, id: m.notes[m.notesCursor].id}
 					} else {
 						query, err = db.Prepare(`REPLACE INTO reviews (date_added, review_text, work_id, review_id) VALUES (?, ?, ?, ?)`)
-						m.reviews[m.entryCursor] = entry{content: content, date: date, id: m.reviews[m.entryCursor].id}
+						m.reviews[m.reviewsCursor] = entry{content: content, date: date, id: m.reviews[m.reviewsCursor].id}
 					}
 
 				}
@@ -234,13 +246,43 @@ func (m *WorkPageModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				if m.writingMode == "ADD" {
 					query.Exec(date, content, m.currWorkId)
 				} else {
-					query.Exec(date, content, m.currWorkId, m.reviews[m.entryCursor].id)
+					switch m.tabCursor {
+					case note:
+						query.Exec(date, content, m.currWorkId, m.notes[m.notesCursor].id)
+					case review:
+						query.Exec(date, content, m.currWorkId, m.reviews[m.reviewsCursor].id)
+					}
 				}
 				query.Close()
 				m.textArea.Reset()
 				m.writingCursor = 0
 
-			} else if m.rightCursor == 1 && m.mainCursor != work {
+			} else if m.rightCursor == display && m.mainCursor != work && m.entryCursor == 1 {
+				db := database.GetDB()
+				var (
+					query *sql.Stmt
+					index int
+					err   error
+				)
+				switch m.tabCursor {
+				case note:
+					query, err = db.Prepare("DELETE FROM notes WHERE note_id = ?")
+					index = m.notesCursor
+					m.notes = append(m.notes[:index], m.notes[:index+1]...)
+					if m.notesCursor > 0 {
+						m.notesCursor--
+					}
+				case review:
+					query, err = db.Prepare("DELETE FROM reviews WHERE review_id = ?")
+					index = m.reviewsCursor
+					m.reviews = append(m.reviews[:index], m.reviews[:index+1]...)
+					if m.reviewsCursor > 0 {
+						m.reviewsCursor--
+					}
+				}
+				CheckError("Failed to prep delete entry query: ", err)
+				_, err = query.Exec(index)
+			} else if m.rightCursor == display && m.mainCursor != work && m.entryCursor == 0 {
 				m.writing = true
 				m.writingMode = "EDIT"
 				if m.tabCursor == 0 {
@@ -248,12 +290,23 @@ func (m *WorkPageModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				} else {
 					m.textArea.SetValue(m.reviews[m.entryCursor].content)
 				}
+			} else if m.rightCursor != display && m.mainCursor == del {
+				DebugLog("Deleting work: ", m.currWorkId)
+				db := database.GetDB()
+				query, err := db.Prepare(`DELETE FROM works WHERE work_id = ?`)
+				CheckError("Failed to prepare delete work query: ", err)
+				_, err = query.Exec(m.currWorkId)
+				CheckError("Failed to delete work from db: ", err)
+				m.resetCursors()
+				cmds = tea.Batch(cmds, func() tea.Msg { return ViewMsg(0) })
+				cmds = tea.Batch(cmds, func() tea.Msg { return DeleteWorkMsg(m.currWorkId) })
 			} else if m.mainCursor == work {
 				m.work, cmd = m.work.Update(msg)
 				var ok bool
 				var workMsg []string
 				if cmd != nil {
 					workMsg, ok = cmd().(NewWorkMsg)
+					cmds = tea.Batch(cmds, cmd)
 				}
 				if ok {
 					DebugLog("addPage got NewWorkMsg: ", msg)
@@ -284,16 +337,21 @@ func (m *WorkPageModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 					CheckError("Failed to close insert to works table: ", err)
 				}
-				cmd = nil
+				cmd = func() tea.Msg { return DeleteWorkMsg(m.currWorkId) }
+				DebugLog("Created DeleteWorkMsg: ", m.currWorkId)
 			}
 			cmds = tea.Batch(cmds, cmd)
 		case key.Matches(msg, defaultWorkMap.Exit):
 			if m.mainCursor == work {
 				_, cmd = m.work.Update(msg)
-				_, ok := cmd().(ViewMsg)
-				if ok && m.focused {
-					cmd = nil
-					m.focused = false
+				if cmd != nil {
+					_, ok := cmd().(ViewMsg)
+					if ok && m.focused {
+						cmd = nil
+						m.focused = false
+					} else {
+						m.work.ClearComponents()
+					}
 				}
 			} else if m.writing {
 				if m.textArea.Focused() {
@@ -304,6 +362,7 @@ func (m *WorkPageModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.textArea.Reset()
 				}
 			} else {
+				m.resetCursors()
 				cmd = func() tea.Msg { return ViewMsg(0) }
 			}
 		case key.Matches(msg, defaultWorkMap.TopLevelRight):
@@ -343,12 +402,46 @@ func (m *WorkPageModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.tabCursor = 0
 			} else if m.focused {
 				_, cmd = m.work.Update(msg)
+			} else if m.rightCursor == display && m.mainCursor != work {
+				switch m.tabCursor {
+				case note:
+					if m.notesCursor > 0 {
+						m.notesCursor--
+					}
+				case review:
+					if m.reviewsCursor > 0 {
+						m.reviewsCursor--
+					}
+				}
 			}
 		case key.Matches(msg, defaultWorkMap.Right):
 			if m.mainCursor == tabs && m.rightCursor == header && !m.writing {
 				m.tabCursor = 1
 			} else if m.focused {
 				_, cmd = m.work.Update(msg)
+			} else if m.rightCursor == display && m.mainCursor != work {
+				switch m.tabCursor {
+				case note:
+					if m.notesCursor < len(m.notes)-1 {
+						m.notesCursor++
+					}
+				case review:
+					if m.reviewsCursor < len(m.reviews)-1 {
+						m.reviewsCursor++
+					}
+				}
+			}
+		case key.Matches(msg, defaultWorkMap.Up):
+			if m.mainCursor == work && m.focused {
+				_, cmd = m.work.Update(msg)
+			} else if m.rightCursor == 1 && m.entryCursor == 1 {
+				m.entryCursor--
+			}
+		case key.Matches(msg, defaultWorkMap.Down):
+			if m.mainCursor == work && m.focused {
+				_, cmd = m.work.Update(msg)
+			} else if m.rightCursor == display && m.entryCursor == 0 {
+				m.entryCursor++
 			}
 		default:
 			if m.mainCursor == work && m.focused {
@@ -376,8 +469,8 @@ func (m *WorkPageModel) View() tea.View {
 
 	if m.writing {
 		writingHeader := m.writingMode + " " + writeHeader[m.tabCursor]
-		textarea := renderFocused(m.tabsStyle, m.textArea.View(), m.writingCursor == 0)
-		button := renderFocused(m.buttonStyle, "CONFIRM", m.writingCursor == 1)
+		textarea := RenderFocused(m.tabsStyle, m.textArea.View(), m.writingCursor == 0)
+		button := RenderFocused(m.buttonStyle, "CONFIRM", m.writingCursor == 1)
 
 		s = lipgloss.JoinVertical(lipgloss.Center, writingHeader, textarea, button)
 
@@ -400,28 +493,30 @@ func (m *WorkPageModel) View() tea.View {
 	}
 	details := workView.Content
 	isFocused := m.focused
-	details = renderFocused(m.tabsStyle, details, isFocused)
+	details = RenderFocused(m.tabsStyle, details, isFocused)
 
 	isSelected := m.mainCursor == work
-	details = renderFocused(m.detailsStyle.Height(m.height), details, isSelected)
+	details = RenderFocused(m.detailsStyle.Height(m.height), details, isSelected)
 
 	s = lipgloss.JoinHorizontal(lipgloss.Top, s, details)
 
-	headerContent := "ADD"
+	headerContent := "DELETE"
+	isFocused = m.mainCursor == del && m.rightCursor == header
+	headerContent = RenderFocused(m.buttonStyle, headerContent, isFocused)
 	isFocused = m.mainCursor == add && m.rightCursor == header
-	headerContent = renderFocused(m.buttonStyle, headerContent, isFocused)
+	headerContent = lipgloss.JoinHorizontal(lipgloss.Top, RenderFocused(m.buttonStyle, "ADD", isFocused), headerContent)
 
 	renderedTabs := []string{}
 	tabsArr := []string{"NOTES", "REVIEWS"}
 	for i, tab := range tabsArr {
 		tab = lipgloss.PlaceHorizontal(9, lipgloss.Center, tab)
 		isFocused = m.tabCursor == i
-		renderedTabs = append(renderedTabs, renderFocused(m.tabStyle, tab, isFocused))
+		renderedTabs = append(renderedTabs, RenderFocused(m.tabStyle, tab, isFocused))
 	}
 
 	tabsContent := lipgloss.JoinHorizontal(lipgloss.Top, renderedTabs[0], " ", renderedTabs[1])
 	isFocused = m.mainCursor == tabs && m.rightCursor == header
-	tabsContent = renderFocused(m.tabsStyle, tabsContent, isFocused)
+	tabsContent = RenderFocused(m.tabsStyle, tabsContent, isFocused)
 
 	headerContent = lipgloss.JoinHorizontal(lipgloss.Top, tabsContent, headerContent)
 
@@ -429,13 +524,13 @@ func (m *WorkPageModel) View() tea.View {
 	var currEntry entry
 	var hasEntry bool
 	if m.tabCursor == 0 && len(m.notes) > 0 {
-		currEntry = m.notes[m.entryCursor]
+		currEntry = m.notes[m.notesCursor]
 		hasEntry = true
-		position = lipgloss.PlaceVertical(m.height-11, lipgloss.Bottom, strconv.Itoa(m.entryCursor+1)+"/"+strconv.Itoa(len(m.notes)))
+		position = lipgloss.PlaceVertical(m.height-11, lipgloss.Bottom, strconv.Itoa(m.notesCursor+1)+"/"+strconv.Itoa(len(m.notes)))
 	} else if m.tabCursor == 1 && len(m.reviews) > 0 {
-		currEntry = m.reviews[m.entryCursor]
+		currEntry = m.reviews[m.reviewsCursor]
 		hasEntry = true
-		position = lipgloss.PlaceVertical(m.height-11, lipgloss.Bottom, strconv.Itoa(m.entryCursor+1)+"/"+strconv.Itoa(len(m.reviews)))
+		position = lipgloss.PlaceVertical(m.height-11, lipgloss.Bottom, strconv.Itoa(m.reviewsCursor+1)+"/"+strconv.Itoa(len(m.reviews)))
 	}
 
 	if hasEntry {
@@ -443,15 +538,22 @@ func (m *WorkPageModel) View() tea.View {
 		if currEntry.date != "" {
 			date = currEntry.date[:10]
 		}
-		displayContent = lipgloss.JoinVertical(lipgloss.Right, date, m.buttonStyle.Render("EDIT"), m.buttonStyle.Render("DELETE"), position)
-		content := lipgloss.PlaceHorizontal(m.width-(lipgloss.Width(displayContent)+31), lipgloss.Left, m.entryContentStyle.Width(m.width-(lipgloss.Width(displayContent)+31)).Render(currEntry.content))
+		isFocused = m.rightCursor == display && m.entryCursor == 0
+		editBtn := RenderFocused(m.buttonStyle, "EDIT", isFocused)
+		isFocused = m.rightCursor == display && m.entryCursor == 1
+		deleteBtn := RenderFocused(m.buttonStyle, "DELETE", isFocused)
+		displayContent = lipgloss.JoinVertical(lipgloss.Right, date, editBtn, deleteBtn, position)
+		content := m.entryContentStyle.Width(m.width - (lipgloss.Width(displayContent) + 37)).Render(currEntry.content)
 		displayContent = lipgloss.JoinHorizontal(lipgloss.Top, content, displayContent)
+		leftArrow := m.arrowStyle.Render(lipgloss.PlaceVertical(lipgloss.Height(displayContent), lipgloss.Center, "<"))
+		rightArrow := m.arrowStyle.Render(lipgloss.PlaceVertical(lipgloss.Height(displayContent), lipgloss.Center, ">"))
+		displayContent = lipgloss.JoinHorizontal(lipgloss.Center, leftArrow, displayContent, rightArrow)
 	} else {
 		displayContent = lipgloss.PlaceHorizontal(m.width-31, lipgloss.Center, "NO "+tabsArr[m.tabCursor])
 		displayContent = lipgloss.PlaceVertical(m.height-4, lipgloss.Center, displayContent)
 	}
 	isFocused = m.mainCursor > work && m.rightCursor == display
-	displayContent = renderFocused(m.displayStyle, displayContent, isFocused)
+	displayContent = RenderFocused(m.displayStyle, displayContent, isFocused)
 
 	rightSide := lipgloss.JoinVertical(lipgloss.Left, headerContent, displayContent)
 

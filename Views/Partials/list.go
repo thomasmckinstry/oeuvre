@@ -134,6 +134,16 @@ func (m ListModel) Init() tea.Cmd {
 func (m *ListModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
+	case DeleteWorkMsg:
+		rows := m.table.Rows()
+		for i, row := range rows {
+			currId, _ := strconv.Atoi(row[Id])
+			if currId == int(msg) {
+				rows = append(rows[:i], rows[i+1:]...)
+				break
+			}
+		}
+		m.table.SetRows(rows)
 	case NewWorkMsg:
 		DebugLog("List got NewWorkMsg: ", msg)
 		newRow := []string(msg)

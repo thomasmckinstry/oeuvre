@@ -2,8 +2,6 @@ package components
 
 import (
 	"fmt"
-	"log"
-	"os"
 
 	"charm.land/bubbles/v2/key"
 	"charm.land/bubbletea/v2"
@@ -82,9 +80,6 @@ func (m *CheckboxModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
-		if len(os.Getenv("DEBUG")) > 0 {
-			log.Println("Checkbox input received", msg.String())
-		}
 		switch {
 		case key.Matches(msg, defaultCheckboxMap.Unfocus): // Unfocus the component
 			m.selected = false

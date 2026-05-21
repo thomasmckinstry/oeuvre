@@ -56,6 +56,8 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds tea.Cmd
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
+	case DeleteWorkMsg:
+		_, cmd = m.homeModel.Update(msg)
 	case NewWorkMsg:
 		_, cmd = m.homeModel.Update(msg)
 	case WorkDetails:

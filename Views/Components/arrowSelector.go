@@ -4,7 +4,7 @@ import (
 	"charm.land/bubbles/v2/key"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
-	"github.com/thomasmckinstry/MediaLogger-TUI/utils"
+	. "github.com/thomasmckinstry/MediaLogger-TUI/utils"
 )
 
 type arrowInputKeyMap struct {
@@ -46,7 +46,7 @@ func InitialArrow(options []string, title string, width int, height int) ArrowMo
 		contentStyle: lipgloss.NewStyle().
 			MarginTop(1),
 		textStyle: lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#6E3F00")),
+			Foreground(Unfocused),
 		title: title,
 	}
 }
@@ -72,7 +72,7 @@ func (m *ArrowModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		}
 	}
-	cmd = func() tea.Msg { return utils.NavMsg(true) }
+	cmd = func() tea.Msg { return NavMsg(true) }
 	cmds = tea.Batch(cmds, cmd)
 	return m, cmds
 }

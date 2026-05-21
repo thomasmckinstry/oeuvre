@@ -4,6 +4,8 @@ import "strings"
 
 type NavMsg bool
 
+type DeleteWorkMsg int
+
 type NewWorkMsg []string
 
 type ViewMsg int
@@ -34,6 +36,7 @@ const ( // Sort Option
 	Medium
 	Status
 	Released
+	Id
 )
 
 var statusName = map[int]string{

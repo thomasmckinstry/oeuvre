@@ -51,9 +51,6 @@ type WorkFormModel struct {
 }
 
 func (m *WorkFormModel) ClearComponents() {
-	if m.cursor == len(m.forms) {
-		m.enterStyle = m.enterStyle.BorderForeground(lipgloss.Color("#6E3F00"))
-	}
 	m.cursor = 0
 	for _, form := range m.forms {
 		switch form := form.(type) {
@@ -107,7 +104,7 @@ func InitialWorkFormModel(width int, height int) *WorkFormModel {
 			BorderLeft(true),
 		enterStyle: lipgloss.NewStyle().
 			BorderStyle(lipgloss.DoubleBorder()).
-			BorderForeground(lipgloss.Color("#6E3F00")),
+			BorderForeground(Unfocused),
 	}
 }
 
@@ -186,7 +183,7 @@ func (m *WorkFormModel) Update(msg tea.Msg) (*WorkFormModel, tea.Cmd) {
 			cmds = tea.Batch(cmds, cmd)
 			m.focused = true
 		case key.Matches(msg, DefaultWorkFormKeyMap.Unfocus):
-			if !m.focused {
+			if !m.focused || m.cursor == EnterForm {
 				cmds = tea.Batch(cmds, func() tea.Msg { return (ViewMsg(0)) })
 			} else if m.cursor < len(m.forms) {
 				_, cmd = m.forms[m.cursor].Update(msg)
@@ -209,11 +206,9 @@ func (m *WorkFormModel) Update(msg tea.Msg) (*WorkFormModel, tea.Cmd) {
 				cmds = tea.Batch(cmds, cmd)
 			} else if m.cursor >= len(m.forms)-1 && ok && bool(msg) {
 				m.cursor++
-				m.enterStyle = m.enterStyle.BorderForeground(lipgloss.Color("#D17600"))
 			}
 		case key.Matches(msg, DefaultWorkFormKeyMap.Up):
 			if m.cursor == len(m.forms) {
-				m.enterStyle = m.enterStyle.BorderForeground(lipgloss.Color("#6E3F00"))
 				m.cursor--
 				_, cmd = m.forms[m.cursor].Update(msg)
 				cmds = tea.Batch(cmds, cmd)
@@ -228,8 +223,10 @@ func (m *WorkFormModel) Update(msg tea.Msg) (*WorkFormModel, tea.Cmd) {
 				cmds = tea.Batch(cmds, cmd)
 			}
 		default:
-			_, cmd = m.forms[m.cursor].Update(msg)
-			cmds = tea.Batch(cmds, cmd)
+			if m.cursor != EnterForm {
+				_, cmd = m.forms[m.cursor].Update(msg)
+				cmds = tea.Batch(cmds, cmd)
+			}
 		}
 	}
 	return m, cmds
@@ -252,7 +249,8 @@ func (m *WorkFormModel) View() tea.View {
 		}
 		s += "\n"
 	}
-	enter := m.enterStyle.Render(lipgloss.PlaceHorizontal(15, lipgloss.Center, "CONFIRM"))
+	isFocused := m.cursor == EnterForm
+	enter := RenderFocused(m.enterStyle, "CONFIRM", isFocused)
 	enter = lipgloss.PlaceVertical(m.height-lipgloss.Height(s)-1, lipgloss.Bottom, enter)
 	s = lipgloss.JoinVertical(lipgloss.Center, s, enter)
 
