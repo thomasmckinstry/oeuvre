@@ -2,6 +2,8 @@
 
 This project is a Terminal User Interface to track movies, shows, and other media (Referred to as "works") that the user wants to read/watch/etc.
 
+![Demo GIF](assets/demo.gif)
+
 ## Features:
 - Add/Remove a work from the database.
 - Edit a work already in the database.

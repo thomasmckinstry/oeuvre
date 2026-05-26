@@ -8,30 +8,38 @@ Set Theme "Gruvbox Light"
 Sleep 1.5s
 Type "./MediaLogger-TUI"
 Enter
-Sleep 500ms
+Sleep 1.5s
 Enter 2
-Sleep 500ms
 Type "Shawshank Redemption"
+Sleep 250ms
 Enter
 Down
 Enter
 Type "1994"
+Sleep 250ms
 Enter
 Down
 Enter
 Enter
 Type "Drama"
+Sleep 250ms
 Enter
 Type "Crime"
+Sleep 250ms
 Enter
 Escape 2
 Down
 Enter
 Down 2
 Enter
+Sleep 250ms
 Down 5 Enter
+Sleep 250ms
 Escape Down
 Right 3
-Down Enter
-Sleep 1s
+Sleep 250ms
+Down
+Sleep 250ms
+Enter
+Sleep 3.5s
 Ctrl+C
