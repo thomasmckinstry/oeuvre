@@ -93,14 +93,12 @@ func init_db(db *sql.DB) {
 		_, err = db.Exec(`
 			INSERT INTO media_type_table (id, type_name)
 			VALUES
-				(0, 'Anime'),
-				(1, 'Manga'),
-				(2, 'Movie'),
-				(3, 'Book'),
-				(4, 'Comic'),
-				(5, 'Show'),
-				(6, 'Animated'),
-				(7, 'Live Action');
+				(0, 'Movie'),
+				(1, 'Book'),
+				(2, 'Comic'),
+				(3, 'Show'),
+				(4, 'Animated'),
+				(5, 'Live Action');
 		`)
 		utils.CheckError("Unable to insert to media_type_table in database: ", err)
 	}

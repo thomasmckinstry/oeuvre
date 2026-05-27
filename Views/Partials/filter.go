@@ -92,7 +92,7 @@ func InitialFilter(height int) FilterModel {
 
 	titleInput := components.InitialTextInput(width, "Title", "{ title }", titleSuggestions)
 	tagsInput := components.InitialInput(5, "{ tag }", "Tag", width-1, false, tagSuggestions)
-	mediums := []string{"Movie", "Book", "Show", "Anime", "Manga", "Comic", "Animated", "Live Action"} // TODO: Query the db for this.
+	mediums := []string{"Movie", "Book", "Show", "Comic", "Animated", "Live Action"} // TODO: Query the db for this.
 	mediumInput := components.InitialCheckbox(mediums, "Medium", width)
 	statuses := []string{"Pending", "Started", "Hiatus", "Completed", "Dropped"} // TODO: Query the db for this.
 	statusInput := components.InitialCheckbox(statuses, "Status", width)

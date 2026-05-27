@@ -67,7 +67,7 @@ func (m *WorkFormModel) ClearComponents() {
 func InitialWorkFormModel(width int, height int) *WorkFormModel {
 	title := InitialTextInput(width, "Title", "{ title }", nil)
 	year := InitialTextInput(width, "Year", "{ year }", nil)
-	mediums := []string{"Anime", "Manga", "Movie", "Book", "Comic", "Show", "Animated", "Live Action"} // TODO: Query the db for this.
+	mediums := []string{"Movie", "Book", "Comic", "Show", "Animated", "Live Action"} // TODO: Query the db for this.
 	medium := InitialCheckbox(mediums, "Medium", width)
 	statuses := []string{"Pending", "Started", "Hiatus", "Completed", "Dropped"} // TODO: Query the db for this.
 	status := InitialArrow(statuses, "Status", width, 3)

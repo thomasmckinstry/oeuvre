@@ -72,9 +72,7 @@ var statusInt = map[string]int{
 }
 
 const (
-	Anime int = iota
-	Manga
-	Movie
+	Movie int = iota
 	Book
 	Comic
 	Show
@@ -83,8 +81,6 @@ const (
 )
 
 var mediumName = map[int]string{
-	Anime:       "Anime",
-	Manga:       "Manga",
 	Movie:       "Movie",
 	Book:        "Book",
 	Comic:       "Comic",
@@ -94,8 +90,6 @@ var mediumName = map[int]string{
 }
 
 var mediumInt = map[string]int{
-	"Anime":       Anime,
-	"Manga":       Manga,
 	"Movie":       Movie,
 	"Book":        Book,
 	"Comic":       Comic,
