@@ -34,17 +34,8 @@ var defaultListMap = listKeyMap{
 }
 
 type ListModel struct {
-	style lipgloss.Style
 	table table.Model
 	rows  []table.Row
-}
-
-func (m ListModel) toggleSelected() lipgloss.Style {
-	if !m.table.Focused() {
-		return m.style.BorderForeground(lipgloss.Color("#D17600"))
-	} else {
-		return m.style.BorderForeground(lipgloss.Color("#6E3F00"))
-	}
 }
 
 func InitialList(width int, height int) ListModel {
@@ -115,13 +106,6 @@ func InitialList(width int, height int) ListModel {
 	t.SetStyles(s)
 
 	return ListModel{
-		style: lipgloss.NewStyle().
-			BorderStyle(lipgloss.NormalBorder()).
-			BorderLeft(true).
-			BorderForeground(lipgloss.Color("#6E3F00")).
-			PaddingTop(1).
-			Width(width).
-			Height(height),
 		table: t,
 		rows:  rows,
 	}
@@ -164,8 +148,9 @@ func (m *ListModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		rows = append(rows, table.Row{newRow[TitleForm], GetTagsString(tagsArr), mediumsStr, Status_itos(intStatus), newRow[YearForm]})
 		m.table.SetRows(rows)
 	case tea.WindowSizeMsg:
-		m.style = m.style.Height(msg.Height).Width(msg.Width - 18)
 		width := msg.Width - 29
+		m.table.SetWidth(width)
+		m.table.SetHeight(msg.Height)
 		m.table.SetColumns([]table.Column{
 			{Title: "Title", Width: width / 4},
 			{Title: "Tags", Width: width / 3},
@@ -184,7 +169,6 @@ func (m *ListModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.table.Focus()
 			}
 		case key.Matches(msg, defaultListMap.Nav):
-			m.style = m.toggleSelected()
 			if m.table.Focused() {
 				m.table.Blur()
 			} else {
@@ -246,5 +230,5 @@ func (m *ListModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m ListModel) View() tea.View {
-	return tea.NewView(m.style.Render(m.table.View()))
+	return tea.NewView(m.table.View())
 }

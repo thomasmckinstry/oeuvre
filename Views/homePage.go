@@ -12,13 +12,17 @@ import (
 	"os"
 )
 
-var height int
+const (
+	addBtn int = iota
+	filter
+	sort
+	numSidebarForms
+)
 
 const (
-	Add int = iota
-	Filter
-	Sort
-	NumSidebarForms
+	sidebar int = iota
+	list
+	numPartialsHome
 )
 
 type homeKeyMap struct {
@@ -58,35 +62,42 @@ var defaultHomeKeyMap = homeKeyMap{
 	),
 }
 
+var (
+	formStyle lipgloss.Style = lipgloss.NewStyle().
+			MarginLeft(1).
+			BorderTop(true).
+			BorderStyle(lipgloss.NormalBorder()).
+			BorderForeground(lipgloss.Color("#6E3F00"))
+	listStyle lipgloss.Style = lipgloss.NewStyle().
+			BorderStyle(lipgloss.NormalBorder()).
+			BorderLeft(true).
+			BorderForeground(lipgloss.Color("#6E3F00")).
+			PaddingTop(1)
+)
+
 type HomeModel struct {
 	sidebarCursor int
 	mainCursor    int
 	sidebarViews  []tea.Model
 	listModel     tea.Model
-	formStyle     lipgloss.Style
 }
 
 func InitialHome(width int, height int) *HomeModel {
 	list := partials.InitialList(width-19, height)
-	add := partials.InitialAdd() // height = 1 Note: I think each side of the border adds 1
+	add := partials.InitialAdd()
 	filter := partials.InitialFilter(height - (7))
 	sort := components.InitialArrow([]string{"title", "medium", "status", "tags", "release date"}, "Sort", 18, 3)
 
-	sidebarList := []tea.Model{}               //make([]tea.Model, 3)
-	sidebarList = append(sidebarList, &add)    //[0] = add
-	sidebarList = append(sidebarList, &filter) //[1] = filter
-	sidebarList = append(sidebarList, &sort)   //[2] = sort
+	sidebarList := []tea.Model{}
+	sidebarList = append(sidebarList, &add)
+	sidebarList = append(sidebarList, &filter)
+	sidebarList = append(sidebarList, &sort)
 
 	return &HomeModel{
 		sidebarViews:  sidebarList,
 		listModel:     &list,
 		sidebarCursor: 0,
 		mainCursor:    0,
-		formStyle: lipgloss.NewStyle().
-			MarginLeft(1).
-			BorderTop(true).
-			BorderStyle(lipgloss.NormalBorder()).
-			BorderForeground(lipgloss.Color("#6E3F00")),
 	}
 }
 
@@ -110,7 +121,7 @@ func (m *HomeModel) Update(msg tea.Msg) (*HomeModel, tea.Cmd) {
 	case tea.KeyMsg:
 		switch {
 		case key.Matches(msg, defaultHomeKeyMap.TopLevelUp):
-			if m.mainCursor == 0 && m.sidebarCursor > 0 {
+			if m.mainCursor == sidebar && m.sidebarCursor > addBtn {
 				_, cmd = m.sidebarViews[m.sidebarCursor].Update(msg)
 				nav, ok := cmd().(NavMsg)
 				if ok && nav == true {
@@ -120,7 +131,7 @@ func (m *HomeModel) Update(msg tea.Msg) (*HomeModel, tea.Cmd) {
 				}
 			}
 		case key.Matches(msg, defaultHomeKeyMap.TopLevelDown):
-			if m.mainCursor == 0 && m.sidebarCursor < 2 {
+			if m.mainCursor == sidebar && m.sidebarCursor < numSidebarForms-1 {
 				_, cmd = m.sidebarViews[m.sidebarCursor].Update(msg)
 				nav, ok := cmd().(NavMsg)
 				if ok && nav == true {
@@ -130,7 +141,7 @@ func (m *HomeModel) Update(msg tea.Msg) (*HomeModel, tea.Cmd) {
 				}
 			}
 		case key.Matches(msg, defaultHomeKeyMap.TopLevelLeft):
-			if m.mainCursor > 0 {
+			if m.mainCursor == list {
 				m.mainCursor--
 				m.listModel, cmd = m.listModel.Update(msg)
 				cmds = tea.Batch(cmds, cmd)
@@ -138,7 +149,7 @@ func (m *HomeModel) Update(msg tea.Msg) (*HomeModel, tea.Cmd) {
 				cmds = tea.Batch(cmds, cmd)
 			}
 		case key.Matches(msg, defaultHomeKeyMap.TopLevelRight):
-			if m.mainCursor < 1 {
+			if m.mainCursor == sidebar {
 				m.mainCursor++
 				m.listModel, cmd = m.listModel.Update(msg)
 				cmds = tea.Batch(cmds, cmd)
@@ -146,7 +157,7 @@ func (m *HomeModel) Update(msg tea.Msg) (*HomeModel, tea.Cmd) {
 				cmds = tea.Batch(cmds, cmd)
 			}
 		case key.Matches(msg, defaultHomeKeyMap.SidebarNav):
-			if m.mainCursor == 1 {
+			if m.mainCursor == list {
 				m.listModel, cmd = m.listModel.Update(msg)
 				cmds = tea.Batch(cmds, cmd)
 			} else {
@@ -154,12 +165,12 @@ func (m *HomeModel) Update(msg tea.Msg) (*HomeModel, tea.Cmd) {
 				cmds = tea.Batch(cmds, cmd)
 			}
 		case key.Matches(msg, defaultHomeKeyMap.Confirm):
-			if m.sidebarCursor == 0 && m.mainCursor == 0 {
+			if m.sidebarCursor == add && m.mainCursor == sidebar {
 				if len(os.Getenv("DEBUG")) > 0 {
 					log.Println("homePage sending AddMsg")
 				}
 				cmds = tea.Batch(cmds, func() tea.Msg { return (ViewMsg(1)) })
-			} else if m.mainCursor == 0 {
+			} else if m.mainCursor == sidebar {
 				_, cmd = m.sidebarViews[m.sidebarCursor].Update(msg)
 				cmds = tea.Batch(cmds, cmd)
 				if cmd != nil {
@@ -194,11 +205,8 @@ func (m *HomeModel) View() tea.View {
 	sidebarContent := []string{}
 	for i, form := range m.sidebarViews {
 		formView := form.View()
-		if i == m.sidebarCursor && m.mainCursor == 0 {
-			sidebarContent = append(sidebarContent, m.formStyle.BorderForeground(lipgloss.Color("#D17600")).Render(formView.Content))
-		} else {
-			sidebarContent = append(sidebarContent, m.formStyle.Render(formView.Content))
-		}
+		isFocused := i == m.sidebarCursor && m.mainCursor == sidebar
+		sidebarContent = append(sidebarContent, RenderFocused(formStyle, formView.Content, isFocused))
 		if formView.Cursor != nil {
 			c = formView.Cursor
 			c.Y += lipgloss.Height(s)
@@ -206,8 +214,9 @@ func (m *HomeModel) View() tea.View {
 	}
 	sidebar := lipgloss.JoinVertical(lipgloss.Center, sidebarContent...)
 
-	list := m.listModel.View()
-	s = lipgloss.JoinHorizontal(lipgloss.Top, sidebar, list.Content)
+	isFocused := m.mainCursor == list
+	list := RenderFocused(listStyle, m.listModel.View().Content, isFocused)
+	s = lipgloss.JoinHorizontal(lipgloss.Top, sidebar, list)
 
 	// Send the UI for rendering
 	view := tea.NewView(s)

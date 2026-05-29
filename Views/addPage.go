@@ -9,9 +9,14 @@ import (
 	"time"
 )
 
+var addStyle lipgloss.Style = lipgloss.NewStyle().
+	Align(lipgloss.Center).
+	PaddingLeft(1).
+	PaddingRight(1).
+	BorderStyle(lipgloss.DoubleBorder())
+
 type AddModel struct {
 	form          *components.WorkFormModel
-	style         lipgloss.Style
 	width, height int
 }
 
@@ -21,11 +26,6 @@ func InitialAddModel(width, height int) *AddModel {
 		width:  width,
 		height: height,
 		form:   form,
-		style: lipgloss.NewStyle().
-			Align(lipgloss.Center).
-			PaddingLeft(1).
-			PaddingRight(1).
-			BorderStyle(lipgloss.DoubleBorder()),
 	}
 }
 
@@ -98,7 +98,7 @@ func (m *AddModel) View() tea.View {
 	formView := m.form.View()
 	c = formView.Cursor
 
-	s = m.style.Render(formView.Content)
+	s = addStyle.Render(formView.Content)
 
 	if c != nil {
 		c.Y += 1

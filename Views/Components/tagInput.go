@@ -5,7 +5,7 @@ import (
 	"charm.land/bubbles/v2/textinput"
 	"charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
-	"github.com/thomasmckinstry/MediaLogger-TUI/utils"
+	. "github.com/thomasmckinstry/MediaLogger-TUI/utils"
 )
 
 type tagKeyMap struct {
@@ -39,6 +39,15 @@ var defaultTagMap = tagKeyMap{
 	),
 }
 
+var (
+	tagStyle lipgloss.Style = lipgloss.NewStyle().
+			Foreground(lipgloss.Color("#D17600"))
+	tagsStyle lipgloss.Style = lipgloss.NewStyle().
+			BorderStyle(lipgloss.NormalBorder()).
+			BorderForeground(lipgloss.Color("#6E3F00")).
+			BorderTop(true)
+)
+
 type TagInputModel struct {
 	textInput  textinput.Model
 	Tags       []string
@@ -46,12 +55,7 @@ type TagInputModel struct {
 	title      string
 	selected   bool // Top level focus, can navigate tags, no text entry
 	tagCnt     int
-
-	titleStyle lipgloss.Style
-	tagStyle   lipgloss.Style
-	tagsStyle  lipgloss.Style
-
-	width int
+	width      int
 
 	errorMsg string
 }
@@ -85,15 +89,6 @@ func InitialInput(tagCnt int, placeholder string, title string, width int, selec
 		tagCnt:     tagCnt,
 		selected:   selected,
 		width:      width,
-		titleStyle: lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#D17600")),
-		tagStyle: lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#D17600")),
-		tagsStyle: lipgloss.NewStyle().
-			BorderStyle(lipgloss.NormalBorder()).
-			BorderForeground(lipgloss.Color("#6E3F00")).
-			Width(width + 3).
-			BorderTop(true),
 	}
 }
 
@@ -115,7 +110,7 @@ func (m *TagInputModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			} else if m.selected {
 				m.selected = false
 			}
-			cmd = func() tea.Msg { return utils.NavMsg(!m.selected) }
+			cmd = func() tea.Msg { return NavMsg(!m.selected) }
 			cmds = tea.Batch(cmds, cmd)
 		case key.Matches(msg, defaultTagMap.Confirm): // Add a tag from the current text input and empty the text input OR focus the component
 			if !m.selected {
@@ -126,7 +121,7 @@ func (m *TagInputModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.Tags = append(m.Tags, m.textInput.Value())
 				m.textInput.Reset()
 			}
-			cmd = func() tea.Msg { return utils.NavMsg(!m.selected) }
+			cmd = func() tea.Msg { return NavMsg(!m.selected) }
 			cmds = tea.Batch(cmds, cmd)
 		case key.Matches(msg, defaultTagMap.Down): // Nav between tags
 			if m.tagsCursor < len(m.Tags)-1 && !m.textInput.Focused() && m.selected {
@@ -135,7 +130,7 @@ func (m *TagInputModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.textInput, cmd = m.textInput.Update(msg) // Default to typing in the text input
 				cmds = tea.Batch(cmds, cmd)
 			}
-			cmd = func() tea.Msg { return utils.NavMsg(!m.selected) }
+			cmd = func() tea.Msg { return NavMsg(!m.selected) }
 			cmds = tea.Batch(cmds, cmd)
 		case key.Matches(msg, defaultTagMap.Up): // Nav between tags
 			if m.tagsCursor > 0 && !m.textInput.Focused() && m.selected {
@@ -144,7 +139,7 @@ func (m *TagInputModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.textInput, cmd = m.textInput.Update(msg) // Default to typing in the text input
 				cmds = tea.Batch(cmds, cmd)
 			}
-			cmd = func() tea.Msg { return utils.NavMsg(!m.selected) }
+			cmd = func() tea.Msg { return NavMsg(!m.selected) }
 			cmds = tea.Batch(cmds, cmd)
 		case key.Matches(msg, defaultTagMap.Delete):
 			if len(m.Tags) > 0 && !m.textInput.Focused() {
@@ -155,7 +150,7 @@ func (m *TagInputModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		default:
 			m.textInput, cmd = m.textInput.Update(msg) // Default to typing in the text input
-			cmd = func() tea.Msg { return utils.NavMsg(!m.selected) }
+			cmd = func() tea.Msg { return NavMsg(!m.selected) }
 			cmds = tea.Batch(cmds, cmd)
 		}
 	}
@@ -173,15 +168,10 @@ func (m *TagInputModel) View() tea.View {
 
 	s = lipgloss.JoinVertical(lipgloss.Left, s, m.textInput.View())
 
-	var wrapTags lipgloss.Style
-	if m.selected && !m.textInput.Focused() {
-		wrapTags = m.tagsStyle.BorderForeground(lipgloss.Color("#D17600"))
-	} else {
-		wrapTags = m.tagsStyle
-	}
+	isFocused := m.selected && !m.textInput.Focused()
 
 	if len(m.Tags) == 0 {
-		s = lipgloss.JoinVertical(lipgloss.Left, s, wrapTags.Render())
+		s = lipgloss.JoinVertical(lipgloss.Left, s, RenderFocused(tagsStyle, lipgloss.PlaceHorizontal(m.width+2, lipgloss.Center, ""), isFocused))
 	}
 
 	for index, tag := range m.Tags {
@@ -189,13 +179,13 @@ func (m *TagInputModel) View() tea.View {
 		if tag == "" {
 			continue
 		}
-		tagStr = " - " + tag
+		tagStr = lipgloss.PlaceHorizontal(m.width+2, lipgloss.Left, TruncateString(" - "+tag, m.width+2))
 		if index == m.tagsCursor && !m.textInput.Focused() && m.selected { // Color selected field
-			tagStr = m.tagStyle.Render(tagStr)
+			tagStr = tagStyle.Render(tagStr)
 		}
 
 		if index == 0 {
-			tagStr = wrapTags.Render(tagStr)
+			tagStr = RenderFocused(tagsStyle, tagStr, isFocused)
 		}
 
 		s = lipgloss.JoinVertical(lipgloss.Left, s, tagStr)

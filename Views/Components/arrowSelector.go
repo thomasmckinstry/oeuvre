@@ -19,15 +19,19 @@ var defaultArrowMap = arrowInputKeyMap{
 	Right: key.NewBinding(key.WithKeys("l", "right")),
 }
 
+var (
+	arrowContentStyle lipgloss.Style = lipgloss.NewStyle().
+				MarginTop(1)
+	arrowTextStyle lipgloss.Style = lipgloss.NewStyle().
+			Foreground(Unfocused)
+)
+
 type ArrowModel struct {
 	Options       []string
 	OptionsCursor int
 	selected      bool
 	title         string
 	width         int
-	mainStyle     lipgloss.Style
-	contentStyle  lipgloss.Style
-	textStyle     lipgloss.Style
 }
 
 func (m *ArrowModel) GetContents() string {
@@ -39,15 +43,8 @@ func InitialArrow(options []string, title string, width int, height int) ArrowMo
 		Options:       options,
 		OptionsCursor: 0,
 		selected:      false,
-		mainStyle: lipgloss.NewStyle().
-			Width(width).
-			Height(height).
-			Align(lipgloss.Center),
-		contentStyle: lipgloss.NewStyle().
-			MarginTop(1),
-		textStyle: lipgloss.NewStyle().
-			Foreground(Unfocused),
-		title: title,
+		title:         title,
+		width:         width,
 	}
 }
 
@@ -81,17 +78,17 @@ func (m *ArrowModel) View() tea.View {
 	header := lipgloss.PlaceHorizontal(m.width, lipgloss.Center, m.title)
 	options := m.Options[m.OptionsCursor]
 	if m.selected {
-		options = m.textStyle.Foreground(lipgloss.Color("#D17600")).Render(options)
+		options = arrowTextStyle.Foreground(lipgloss.Color("#D17600")).Render(options)
 	} else {
-		options = m.textStyle.Render(options)
+		options = arrowTextStyle.Render(options)
 	}
 	contents := lipgloss.PlaceHorizontal(m.width, lipgloss.Center,
-		m.contentStyle.Render(
+		arrowContentStyle.Render(
 			lipgloss.JoinHorizontal(lipgloss.Center, "< ",
 				lipgloss.PlaceHorizontal(m.width-4, lipgloss.Center,
 					options), " >"),
 		),
 	)
 
-	return tea.NewView(m.mainStyle.Render(lipgloss.JoinVertical(lipgloss.Center, header, contents)))
+	return tea.NewView(lipgloss.PlaceHorizontal(m.width, lipgloss.Center, lipgloss.JoinVertical(lipgloss.Center, header, contents)))
 }

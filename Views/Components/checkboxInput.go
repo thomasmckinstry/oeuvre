@@ -16,8 +16,6 @@ type CheckboxModel struct {
 	Title     string
 	selected  bool
 	width     int
-
-	entryStyle lipgloss.Style
 }
 
 type checkboxKeyMap struct {
@@ -26,6 +24,9 @@ type checkboxKeyMap struct {
 	Confirm key.Binding
 	Unfocus key.Binding
 }
+
+var checkboxEntryStyle lipgloss.Style = lipgloss.NewStyle().
+	Foreground(lipgloss.Color("#D17600"))
 
 var defaultCheckboxMap = checkboxKeyMap{
 	Up: key.NewBinding(
@@ -67,8 +68,6 @@ func InitialCheckbox(entries []string, title string, width int) CheckboxModel {
 		width:     width,
 		Title:     title,
 		EntryVals: make([]bool, len(entries)),
-		entryStyle: lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#D17600")),
 	}
 }
 
@@ -119,7 +118,7 @@ func (m *CheckboxModel) View() tea.View {
 		entry = lipgloss.PlaceHorizontal(m.width-2, lipgloss.Center, medium)
 		entry = lipgloss.JoinHorizontal(lipgloss.Center, fmt.Sprintf(" [%s] ", check), entry)
 		if i == m.cursor && m.selected {
-			entry = m.entryStyle.Render(entry)
+			entry = checkboxEntryStyle.Render(entry)
 		}
 		s = lipgloss.JoinVertical(lipgloss.Center, s, entry)
 	}

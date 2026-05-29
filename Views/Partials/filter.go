@@ -9,7 +9,7 @@ import (
 	"charm.land/lipgloss/v2"
 	"github.com/thomasmckinstry/MediaLogger-TUI/Views/Components"
 	database "github.com/thomasmckinstry/MediaLogger-TUI/db"
-	"github.com/thomasmckinstry/MediaLogger-TUI/utils"
+	. "github.com/thomasmckinstry/MediaLogger-TUI/utils"
 )
 
 type Form interface {
@@ -23,6 +23,28 @@ type filterKeyMap struct {
 	Confirm key.Binding
 	Unfocus key.Binding
 }
+
+const (
+	title int = iota
+	tags
+	medium
+	status
+	enter
+)
+
+var (
+	filterStyle = lipgloss.NewStyle().
+			Align(lipgloss.Center)
+	headerStyle = lipgloss.NewStyle().
+			Align(lipgloss.Center)
+	textinputStyle = lipgloss.NewStyle().
+			BorderStyle(lipgloss.NormalBorder()).
+			BorderForeground(lipgloss.Color("#6E3F00")).
+			BorderLeft(true)
+	enterStyle = lipgloss.NewStyle().
+			BorderStyle(lipgloss.DoubleBorder()).
+			BorderForeground(lipgloss.Color("#6E3F00"))
+)
 
 var filterDefaultMap = filterKeyMap{
 	Nav: key.NewBinding(
@@ -48,17 +70,12 @@ type FilterMsg [][]string
 // Don't want to do that because it's more hands off
 // TODO: Need a different way to index into the components because of different Model types.
 type FilterModel struct {
-	headerText     string
-	focused        bool
-	cursor         int
-	height         int
-	forms          []tea.Model
-	style          lipgloss.Style
-	headerStyle    lipgloss.Style
-	textinputStyle lipgloss.Style
-	enterStyle     lipgloss.Style
-
-	errorMsg string
+	headerText string
+	focused    bool
+	cursor     int
+	height     int
+	width      int
+	forms      []tea.Model
 }
 
 func InitialFilter(height int) FilterModel {
@@ -67,31 +84,31 @@ func InitialFilter(height int) FilterModel {
 
 	db := database.GetDB()
 	rows, err := db.Query(`SELECT * FROM tags_table`)
-	utils.CheckError("Failed to query tags from db: ", err)
+	CheckError("Failed to query tags from db: ", err)
 	for rows.Next() {
 		var tag string
 		err = rows.Scan(&tag)
-		utils.CheckError("Failed to scan tags: ", err)
+		CheckError("Failed to scan tags: ", err)
 		tagSuggestions = append(tagSuggestions, tag)
 	}
 	err = rows.Close()
-	utils.CheckError("Failed to close tags query: ", err)
+	CheckError("Failed to close tags query: ", err)
 
 	titleSuggestions := []string{}
 
 	rows, err = db.Query(`SELECT title FROM works`)
-	utils.CheckError("Failed to query tags from database: ", err)
+	CheckError("Failed to query tags from database: ", err)
 	for rows.Next() {
 		var tag string
 		err = rows.Scan(&tag)
-		utils.CheckError("Failed to scan titles: ", err)
+		CheckError("Failed to scan titles: ", err)
 		titleSuggestions = append(titleSuggestions, tag)
 	}
 	err = rows.Close()
-	utils.CheckError("Failed to close title query: ", err)
+	CheckError("Failed to close title query: ", err)
 
 	titleInput := components.InitialTextInput(width, "Title", "{ title }", titleSuggestions)
-	tagsInput := components.InitialInput(5, "{ tag }", "Tag", width-1, false, tagSuggestions)
+	tagsInput := components.InitialInput(5, "{ tag }", "Tag", width, false, tagSuggestions)
 	mediums := []string{"Movie", "Book", "Show", "Comic", "Animated", "Live Action"} // TODO: Query the db for this.
 	mediumInput := components.InitialCheckbox(mediums, "Medium", width)
 	statuses := []string{"Pending", "Started", "Hiatus", "Completed", "Dropped"} // TODO: Query the db for this.
@@ -104,22 +121,8 @@ func InitialFilter(height int) FilterModel {
 		focused:    false,
 		cursor:     0,
 		height:     height,
+		width:      width,
 		forms:      forms,
-		style: lipgloss.NewStyle().
-			Width(width + 4).
-			Height(height).
-			Align(lipgloss.Center),
-		headerStyle: lipgloss.NewStyle().
-			Align(lipgloss.Center).
-			Width(width + 2),
-		textinputStyle: lipgloss.NewStyle().
-			Width(width + 3).
-			BorderStyle(lipgloss.NormalBorder()).
-			BorderForeground(lipgloss.Color("#6E3F00")).
-			BorderLeft(true),
-		enterStyle: lipgloss.NewStyle().
-			BorderStyle(lipgloss.DoubleBorder()).
-			BorderForeground(lipgloss.Color("#6E3F00")),
 	}
 }
 
@@ -130,11 +133,10 @@ func (m *FilterModel) Init() tea.Cmd {
 func (m *FilterModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	var cmds tea.Cmd
-	m.errorMsg = ""
 
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
-		m.style = m.style.Height(msg.Height - (7))
+		filterStyle = filterStyle.Height(msg.Height - (7))
 		m.height = msg.Height - 7
 	case tea.KeyMsg:
 		switch {
@@ -142,7 +144,6 @@ func (m *FilterModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if m.cursor == len(m.forms) { // Cursor on enter button
 				var contents [][]string
 				var content []string
-				var err error
 				for _, form := range m.forms {
 					switch form := form.(type) {
 					case *components.TextInputModel:
@@ -151,9 +152,6 @@ func (m *FilterModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						content = form.GetContents()
 					case *components.CheckboxModel:
 						content = form.GetContents()
-					}
-					if err != nil {
-						log.Fatal("Failed to marshal input data to JSON: ", err)
 					}
 					contents = append(contents, content)
 				}
@@ -173,30 +171,28 @@ func (m *FilterModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				break
 			}
 			_, cmd = m.forms[m.cursor].Update(msg)
-			msg, ok := cmd().(utils.NavMsg)
+			msg, ok := cmd().(NavMsg)
 			if m.cursor < len(m.forms)-1 && ok && bool(msg) {
 				m.cursor++
 				_, cmd = m.forms[m.cursor].Update(msg)
 			} else if m.cursor >= len(m.forms)-1 && ok && bool(msg) {
 				m.cursor++
-				m.enterStyle = m.enterStyle.BorderForeground(lipgloss.Color("#D17600"))
 			}
 		case key.Matches(msg, filterDefaultMap.Up):
 			if m.cursor == len(m.forms) {
-				m.enterStyle = m.enterStyle.BorderForeground(lipgloss.Color("#6E3F00"))
 				m.cursor--
 				_, cmd = m.forms[m.cursor].Update(msg)
 				break
 			}
 			_, cmd = m.forms[m.cursor].Update(msg)
-			msg, ok := cmd().(utils.NavMsg)
+			msg, ok := cmd().(NavMsg)
 			if m.cursor > 0 && ok && bool(msg) {
 				m.cursor--
 				_, cmd = m.forms[m.cursor].Update(msg)
 			}
 		case key.Matches(msg, filterDefaultMap.Nav):
-			cmd = func() tea.Msg { return utils.NavMsg(!m.focused) }
-			utils.DebugLog("Filter Nav: ", !m.focused)
+			cmd = func() tea.Msg { return NavMsg(!m.focused) }
+			DebugLog("Filter Nav: ", !m.focused)
 			cmds = tea.Batch(cmds, cmd)
 			fallthrough
 		default:
@@ -209,7 +205,7 @@ func (m *FilterModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m *FilterModel) View() tea.View {
 	var c *tea.Cursor
 	//header:
-	s := m.headerStyle.Render(m.headerText)
+	s := headerStyle.Render(lipgloss.PlaceHorizontal(m.width, lipgloss.Center, m.headerText))
 
 	for i, form := range m.forms {
 		s += "\n"
@@ -219,17 +215,14 @@ func (m *FilterModel) View() tea.View {
 			c.Y += lipgloss.Height(s) + 2
 			c.X += 1
 		}
-		if i == m.cursor {
-			s = lipgloss.JoinVertical(lipgloss.Left, s, m.textinputStyle.BorderForeground(lipgloss.Color("#D17600")).Render(formView.Content))
-		} else {
-			s = lipgloss.JoinVertical(lipgloss.Left, s, m.textinputStyle.Render(formView.Content))
-		}
+		isFocused := m.cursor == i
+		s = lipgloss.JoinVertical(lipgloss.Center, s, RenderFocused(textinputStyle, formView.Content, isFocused))
 	}
-	enter := m.enterStyle.Render(lipgloss.PlaceHorizontal(15, lipgloss.Center, "ENTER"))
-	enter = lipgloss.PlaceVertical(m.height-lipgloss.Height(s)-1, lipgloss.Bottom, enter)
+	isFocused := m.cursor == enter
+	enter := RenderFocused(enterStyle, lipgloss.PlaceHorizontal(15, lipgloss.Center, "ENTER"), isFocused)
 	s = lipgloss.JoinVertical(lipgloss.Left, s, enter)
 
-	v := tea.NewView(m.style.Render(s))
+	v := tea.NewView(filterStyle.Render(s))
 	v.Cursor = c
 	return v
 }

@@ -37,7 +37,7 @@ const (
 	PageCount
 )
 
-const ( // Order that the forms are in
+const ( // Order that the forms are in for workForm
 	TitleForm int = iota
 	YearForm
 	TagsForm
@@ -46,7 +46,7 @@ const ( // Order that the forms are in
 	EnterForm
 )
 
-const ( // Sort Option
+const ( // Table Column
 	Title int = iota
 	Tags
 	Medium
@@ -138,4 +138,13 @@ func GetTagsString(tags []string) string {
 		}
 	}
 	return builder.String()
+}
+
+// medium.com/@rohitsangamnerkar1999/understanding-string-truncation-in-go-handling-unicode-safely-7740d24fa6a6
+func TruncateString(s string, maxLen int) string {
+	runes := []rune(s)
+	if len(runes) <= maxLen {
+		return s
+	}
+	return string(runes[:maxLen-3]) + "..."
 }

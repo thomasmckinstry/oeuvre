@@ -14,35 +14,61 @@ import (
 	"time"
 )
 
+var (
+	tabStyle lipgloss.Style = lipgloss.NewStyle().
+			BorderStyle(lipgloss.NormalBorder()).
+			BorderBottom(true).
+			BorderForeground(Unfocused)
+
+	tabsStyle lipgloss.Style = lipgloss.NewStyle().
+			BorderStyle(lipgloss.NormalBorder()).
+			BorderTop(true).
+			MarginLeft(1).
+			MarginRight(1).
+			BorderForeground(Unfocused)
+
+	displayStyle lipgloss.Style = lipgloss.NewStyle().
+			BorderStyle(lipgloss.DoubleBorder()).
+			BorderTop(true).
+			BorderForeground(Unfocused)
+
+	entryContentStyle lipgloss.Style = lipgloss.NewStyle().
+				MarginRight(1)
+
+	detailsStyle lipgloss.Style = lipgloss.NewStyle().
+			BorderStyle(lipgloss.NormalBorder()).
+			BorderRight(true).
+			MarginRight(1).
+			BorderForeground(Unfocused)
+
+	arrowStyle lipgloss.Style = lipgloss.NewStyle().
+			PaddingLeft(1).
+			PaddingRight(1).
+			Foreground(Unfocused)
+)
+
 type entry struct {
 	content, date string
 	id            int
 }
 
 type WorkPageModel struct {
-	work              *components.WorkFormModel
-	currWorkId        int
-	textArea          textarea.Model
-	notes, reviews    []entry
-	writingMode       string
-	focused           bool
-	writing           bool
-	width, height     int
-	tabCursor         int
-	mainCursor        int
-	notesCursor       int
-	reviewsCursor     int
-	entryCursor       int
-	rightCursor       int
-	writingCursor     int
-	displayCursor     int
-	tabStyle          lipgloss.Style
-	tabsStyle         lipgloss.Style
-	buttonStyle       lipgloss.Style
-	displayStyle      lipgloss.Style
-	entryContentStyle lipgloss.Style
-	detailsStyle      lipgloss.Style
-	arrowStyle        lipgloss.Style
+	work           *components.WorkFormModel
+	currWorkId     int
+	textArea       textarea.Model
+	notes, reviews []entry
+	writingMode    string
+	focused        bool
+	writing        bool
+	width, height  int
+	tabCursor      int
+	mainCursor     int
+	notesCursor    int
+	reviewsCursor  int
+	entryCursor    int
+	rightCursor    int
+	writingCursor  int
+	displayCursor  int
 }
 
 type workKeyMap struct {
@@ -116,36 +142,6 @@ func InitialWorkPage(width, height int) *WorkPageModel {
 		textArea: ti,
 		width:    width,
 		height:   height,
-		tabStyle: lipgloss.NewStyle().
-			BorderStyle(lipgloss.NormalBorder()).
-			BorderBottom(true).
-			BorderForeground(Unfocused),
-		tabsStyle: lipgloss.NewStyle().
-			BorderStyle(lipgloss.NormalBorder()).
-			BorderTop(true).
-			MarginLeft(1).
-			MarginRight(1).
-			BorderForeground(Unfocused),
-		detailsStyle: lipgloss.NewStyle().
-			BorderStyle(lipgloss.NormalBorder()).
-			BorderRight(true).
-			MarginRight(1).
-			BorderForeground(Unfocused),
-		buttonStyle: lipgloss.NewStyle().
-			PaddingLeft(2).
-			PaddingRight(2).
-			BorderStyle(lipgloss.DoubleBorder()).
-			BorderForeground(Unfocused),
-		displayStyle: lipgloss.NewStyle().
-			BorderStyle(lipgloss.DoubleBorder()).
-			BorderTop(true).
-			BorderForeground(Unfocused),
-		entryContentStyle: lipgloss.NewStyle().
-			MarginRight(1),
-		arrowStyle: lipgloss.NewStyle().
-			PaddingLeft(1).
-			PaddingRight(1).
-			Foreground(Unfocused),
 	}
 }
 
@@ -491,8 +487,8 @@ func (m *WorkPageModel) View() tea.View {
 
 	if m.writing {
 		writingHeader := m.writingMode + " " + writeHeader[m.tabCursor]
-		textarea := RenderFocused(m.tabsStyle, m.textArea.View(), m.writingCursor == 0)
-		button := RenderFocused(m.buttonStyle, "CONFIRM", m.writingCursor == 1)
+		textarea := RenderFocused(tabsStyle, m.textArea.View(), m.writingCursor == 0)
+		button := RenderFocused(ButtonStyle, "CONFIRM", m.writingCursor == 1)
 
 		s = lipgloss.JoinVertical(lipgloss.Center, writingHeader, textarea, button)
 
@@ -515,30 +511,30 @@ func (m *WorkPageModel) View() tea.View {
 	}
 	details := workView.Content
 	isFocused := m.focused
-	details = RenderFocused(m.tabsStyle, details, isFocused)
+	details = RenderFocused(tabsStyle, details, isFocused)
 
 	isSelected := m.mainCursor == work
-	details = RenderFocused(m.detailsStyle.Height(m.height), details, isSelected)
+	details = RenderFocused(detailsStyle.Height(m.height), details, isSelected)
 
 	s = lipgloss.JoinHorizontal(lipgloss.Top, s, details)
 
 	headerContent := "DELETE"
 	isFocused = m.mainCursor == del && m.rightCursor == header
-	headerContent = RenderFocused(m.buttonStyle, headerContent, isFocused)
+	headerContent = RenderFocused(ButtonStyle, headerContent, isFocused)
 	isFocused = m.mainCursor == add && m.rightCursor == header
-	headerContent = lipgloss.JoinHorizontal(lipgloss.Top, RenderFocused(m.buttonStyle, "ADD", isFocused), headerContent)
+	headerContent = lipgloss.JoinHorizontal(lipgloss.Top, RenderFocused(ButtonStyle, "ADD", isFocused), headerContent)
 
 	renderedTabs := []string{}
 	tabsArr := []string{"NOTES", "REVIEWS"}
 	for i, tab := range tabsArr {
 		tab = lipgloss.PlaceHorizontal(9, lipgloss.Center, tab)
 		isFocused = m.tabCursor == i
-		renderedTabs = append(renderedTabs, RenderFocused(m.tabStyle, tab, isFocused))
+		renderedTabs = append(renderedTabs, RenderFocused(tabStyle, tab, isFocused))
 	}
 
 	tabsContent := lipgloss.JoinHorizontal(lipgloss.Top, renderedTabs[0], " ", renderedTabs[1])
 	isFocused = m.mainCursor == tabs && m.rightCursor == header
-	tabsContent = RenderFocused(m.tabsStyle, tabsContent, isFocused)
+	tabsContent = RenderFocused(tabsStyle, tabsContent, isFocused)
 
 	headerContent = lipgloss.JoinHorizontal(lipgloss.Top, tabsContent, headerContent)
 
@@ -561,21 +557,21 @@ func (m *WorkPageModel) View() tea.View {
 			date = currEntry.date[:10]
 		}
 		isFocused = m.rightCursor == display && m.entryCursor == 0
-		editBtn := RenderFocused(m.buttonStyle, "EDIT", isFocused)
+		editBtn := RenderFocused(ButtonStyle, "EDIT", isFocused)
 		isFocused = m.rightCursor == display && m.entryCursor == 1
-		deleteBtn := RenderFocused(m.buttonStyle, "DELETE", isFocused)
+		deleteBtn := RenderFocused(ButtonStyle, "DELETE", isFocused)
 		displayContent = lipgloss.JoinVertical(lipgloss.Right, date, editBtn, deleteBtn, position)
-		content := m.entryContentStyle.Width(m.width - (lipgloss.Width(displayContent) + 37)).Render(currEntry.content)
+		content := entryContentStyle.Width(m.width - (lipgloss.Width(displayContent) + 37)).Render(currEntry.content)
 		displayContent = lipgloss.JoinHorizontal(lipgloss.Top, content, displayContent)
-		leftArrow := m.arrowStyle.Render(lipgloss.PlaceVertical(lipgloss.Height(displayContent), lipgloss.Center, "<"))
-		rightArrow := m.arrowStyle.Render(lipgloss.PlaceVertical(lipgloss.Height(displayContent), lipgloss.Center, ">"))
+		leftArrow := arrowStyle.Render(lipgloss.PlaceVertical(lipgloss.Height(displayContent), lipgloss.Center, "<"))
+		rightArrow := arrowStyle.Render(lipgloss.PlaceVertical(lipgloss.Height(displayContent), lipgloss.Center, ">"))
 		displayContent = lipgloss.JoinHorizontal(lipgloss.Center, leftArrow, displayContent, rightArrow)
 	} else {
 		displayContent = lipgloss.PlaceHorizontal(m.width-31, lipgloss.Center, "NO "+tabsArr[m.tabCursor])
 		displayContent = lipgloss.PlaceVertical(m.height-4, lipgloss.Center, displayContent)
 	}
 	isFocused = m.mainCursor > work && m.rightCursor == display
-	displayContent = RenderFocused(m.displayStyle, displayContent, isFocused)
+	displayContent = RenderFocused(displayStyle, displayContent, isFocused)
 
 	rightSide := lipgloss.JoinVertical(lipgloss.Left, headerContent, displayContent)
 
