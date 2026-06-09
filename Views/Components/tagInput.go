@@ -55,6 +55,8 @@ type TagInputModel struct {
 	title      string
 	selected   bool // Top level focus, can navigate tags, no text entry
 	tagCnt     int
+	tagStart   int
+	tagEnd     int
 	width      int
 
 	errorMsg string
@@ -117,8 +119,11 @@ func (m *TagInputModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.selected = true
 			} else if m.selected && !m.textInput.Focused() {
 				m.textInput.Focus()
-			} else if m.textInput.Value() != "" && len(m.Tags) < m.tagCnt {
+			} else if m.textInput.Value() != "" {
 				m.Tags = append(m.Tags, m.textInput.Value())
+				if m.tagEnd-m.tagStart < m.tagCnt {
+					m.tagEnd++
+				}
 				m.textInput.Reset()
 			}
 			cmd = func() tea.Msg { return NavMsg(!m.selected) }
@@ -126,6 +131,10 @@ func (m *TagInputModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, defaultTagMap.Down): // Nav between tags
 			if m.tagsCursor < len(m.Tags)-1 && !m.textInput.Focused() && m.selected {
 				m.tagsCursor++
+				if m.tagsCursor == m.tagEnd {
+					m.tagEnd++
+					m.tagStart++
+				}
 			} else { // TODO: If I could come up with a way to avoid this duplication that would be great
 				m.textInput, cmd = m.textInput.Update(msg) // Default to typing in the text input
 				cmds = tea.Batch(cmds, cmd)
@@ -135,6 +144,10 @@ func (m *TagInputModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, defaultTagMap.Up): // Nav between tags
 			if m.tagsCursor > 0 && !m.textInput.Focused() && m.selected {
 				m.tagsCursor--
+				if m.tagsCursor == m.tagStart-1 {
+					m.tagEnd--
+					m.tagStart--
+				}
 			} else {
 				m.textInput, cmd = m.textInput.Update(msg) // Default to typing in the text input
 				cmds = tea.Batch(cmds, cmd)
@@ -146,6 +159,10 @@ func (m *TagInputModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.Tags = append(m.Tags[:m.tagsCursor], m.Tags[m.tagsCursor+1:]...)
 				if m.tagsCursor >= len(m.Tags) {
 					m.tagsCursor--
+					m.tagEnd--
+					if m.tagStart > 0 {
+						m.tagStart--
+					}
 				}
 			}
 		default:
@@ -174,13 +191,13 @@ func (m *TagInputModel) View() tea.View {
 		s = lipgloss.JoinVertical(lipgloss.Left, s, RenderFocused(tagsStyle, lipgloss.PlaceHorizontal(m.width+2, lipgloss.Center, ""), isFocused))
 	}
 
-	for index, tag := range m.Tags {
+	for index, tag := range m.Tags[m.tagStart:m.tagEnd] {
 		tagStr := ""
 		if tag == "" {
 			continue
 		}
 		tagStr = lipgloss.PlaceHorizontal(m.width+2, lipgloss.Left, TruncateString(" - "+tag, m.width+2))
-		if index == m.tagsCursor && !m.textInput.Focused() && m.selected { // Color selected field
+		if index+m.tagStart == m.tagsCursor && !m.textInput.Focused() && m.selected { // Color selected field
 			tagStr = tagStyle.Render(tagStr)
 		}
 

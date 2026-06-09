@@ -9,12 +9,14 @@ import (
 	"log"
 	"os"
 
-	tea "charm.land/bubbletea/v2"
-	"github.com/thomasmckinstry/MediaLogger-TUI/Views"
-	. "github.com/thomasmckinstry/MediaLogger-TUI/utils"
-	"golang.org/x/term"
 	"net/http"
 	_ "net/http/pprof"
+
+	tea "charm.land/bubbletea/v2"
+	"github.com/thomasmckinstry/MediaLogger-TUI/Views"
+	"github.com/thomasmckinstry/MediaLogger-TUI/utils"
+	. "github.com/thomasmckinstry/MediaLogger-TUI/utils"
+	"golang.org/x/term"
 )
 
 var (
@@ -143,6 +145,8 @@ func main() {
 			log.Println(http.ListenAndServe("localhost:6060", nil))
 		}()
 	}
+
+	utils.ReadConfig("config.yaml")
 
 	mainModel := initialModel()
 	program := tea.NewProgram(&mainModel)

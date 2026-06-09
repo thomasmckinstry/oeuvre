@@ -9,6 +9,7 @@ import (
 	"charm.land/lipgloss/v2"
 	"github.com/thomasmckinstry/MediaLogger-TUI/Views/Components"
 	database "github.com/thomasmckinstry/MediaLogger-TUI/db"
+	"github.com/thomasmckinstry/MediaLogger-TUI/utils"
 	. "github.com/thomasmckinstry/MediaLogger-TUI/utils"
 )
 
@@ -109,9 +110,9 @@ func InitialFilter(height int) FilterModel {
 
 	titleInput := components.InitialTextInput(width, "Title", "{ title }", titleSuggestions)
 	tagsInput := components.InitialInput(5, "{ tag }", "Tag", width, false, tagSuggestions)
-	mediums := []string{"Movie", "Book", "Show", "Comic", "Animated", "Live Action"} // TODO: Query the db for this.
+	mediums := utils.Config.MediaOptions // TODO: Query the db for this.
 	mediumInput := components.InitialCheckbox(mediums, "Medium", width)
-	statuses := []string{"Pending", "Started", "Hiatus", "Completed", "Dropped"} // TODO: Query the db for this.
+	statuses := utils.Config.StatusOptions // TODO: Query the db for this.
 	statusInput := components.InitialCheckbox(statuses, "Status", width)
 
 	forms := []tea.Model{&titleInput, &tagsInput, &mediumInput, &statusInput}
@@ -192,7 +193,6 @@ func (m *FilterModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		case key.Matches(msg, filterDefaultMap.Nav):
 			cmd = func() tea.Msg { return NavMsg(!m.focused) }
-			DebugLog("Filter Nav: ", !m.focused)
 			cmds = tea.Batch(cmds, cmd)
 			fallthrough
 		default:

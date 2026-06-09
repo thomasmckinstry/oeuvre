@@ -6,7 +6,7 @@ import (
 
 var (
 	Unfocused = lipgloss.Color("#6E3F00")
-	Focused   = lipgloss.Color("#D17600")
+	Focused   = lipgloss.Color("#D17F00")
 )
 
 var (
@@ -21,6 +21,11 @@ func RenderFocused(style lipgloss.Style, content string, isFocused bool) string 
 	if isFocused {
 		return style.BorderForeground(Focused).Render(content)
 	} else {
-		return style.Render(content)
+		return style.BorderForeground(Unfocused).Render(content)
 	}
+}
+
+func SetTheme(focus, unfocus string) {
+	Unfocused = lipgloss.Color(unfocus)
+	Focused = lipgloss.Color(focus)
 }

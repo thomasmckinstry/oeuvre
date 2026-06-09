@@ -70,9 +70,9 @@ func (m *WorkFormModel) ClearComponents() {
 func InitialWorkFormModel(width int, height int) *WorkFormModel {
 	title := components.InitialTextInput(width, "Title", "{ title }", nil)
 	year := components.InitialTextInput(width, "Year", "{ year }", nil)
-	mediums := []string{"Movie", "Book", "Comic", "Show", "Animated", "Live Action"} // TODO: Query the db for this.
+	mediums := Config.MediaOptions
 	medium := components.InitialCheckbox(mediums, "Medium", width)
-	statuses := []string{"Pending", "Started", "Hiatus", "Completed", "Dropped"} // TODO: Query the db for this.
+	statuses := Config.StatusOptions
 	status := components.InitialArrow(statuses, "Status", width, 3)
 
 	var tagSuggestions []string

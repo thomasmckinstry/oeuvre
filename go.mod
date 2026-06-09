@@ -8,6 +8,7 @@ require (
 	charm.land/lipgloss/v2 v2.0.2
 	github.com/mattn/go-sqlite3 v1.14.42
 	golang.org/x/term v0.39.0
+	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (

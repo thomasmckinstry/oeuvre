@@ -23,7 +23,7 @@ func GetDB() *sql.DB {
 		return db
 	}
 
-	db, err = sql.Open("sqlite3", "./media.db")
+	db, err = sql.Open("sqlite3", utils.Config.Database)
 	utils.DebugLog("Created new database instance", nil)
 	if err != nil {
 		log.Fatal("Unable to open database:", err)

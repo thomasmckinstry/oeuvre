@@ -60,7 +60,6 @@ func InitialList(width int, height int) ListModel {
 		if err != nil {
 			log.Fatal("Failed to scan works row: ", err)
 		}
-		DebugLog("Scanned row: ", []string{title, medium, tags, year, string(intStatus), id})
 		var mediumsArr []int
 		var tagsArr []string
 		err := json.Unmarshal([]byte(medium), &mediumsArr)
@@ -129,14 +128,12 @@ func (m *ListModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		m.table.SetRows(rows)
 	case NewWorkMsg:
-		DebugLog("List got NewWorkMsg: ", msg)
 		newRow := []string(msg)
 		rows := m.table.Rows()
 		var mediumsArr []int
 		var tagsArr []string
 		err := json.Unmarshal([]byte(newRow[MediumForm]), &mediumsArr)
 		if err != nil {
-			DebugLog("Medium: ", newRow[MediumForm])
 			log.Fatal("Failed to Unmarshal medium: ", err)
 		}
 		err = json.Unmarshal([]byte(newRow[TagsForm]), &tagsArr)
@@ -176,7 +173,6 @@ func (m *ListModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		case key.Matches(msg, defaultListMap.Confirm):
 			currWork := WorkDetails(m.table.SelectedRow())
-			DebugLog("Viewing: ", currWork)
 			if len(currWork) > 0 {
 				cmd = func() tea.Msg { return ViewMsg(2) }
 				cmd = tea.Batch(cmd, func() tea.Msg { return WorkDetails(m.table.SelectedRow()) })
