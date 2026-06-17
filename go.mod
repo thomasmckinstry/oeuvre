@@ -1,4 +1,4 @@
-module github.com/thomasmckinstry/MediaLogger-TUI
+module github.com/thomasmckinstry/ouevre
 
 go 1.25.8
 

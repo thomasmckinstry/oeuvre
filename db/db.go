@@ -6,7 +6,7 @@ package db
 
 import (
 	"database/sql"
-	"github.com/thomasmckinstry/MediaLogger-TUI/utils"
+	"github.com/thomasmckinstry/ouevre/utils"
 
 	_ "github.com/mattn/go-sqlite3"
 )

@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"log"
 
-	"github.com/thomasmckinstry/MediaLogger-TUI/utils"
+	"github.com/thomasmckinstry/ouevre/utils"
 )
 
 func init_db(db *sql.DB) {

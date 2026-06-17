@@ -5,9 +5,9 @@ import (
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 	"encoding/json"
-	"github.com/thomasmckinstry/MediaLogger-TUI/Views/Components"
-	database "github.com/thomasmckinstry/MediaLogger-TUI/db"
-	. "github.com/thomasmckinstry/MediaLogger-TUI/utils"
+	"github.com/thomasmckinstry/ouevre/Views/Components"
+	database "github.com/thomasmckinstry/ouevre/db"
+	. "github.com/thomasmckinstry/ouevre/utils"
 	"strconv"
 	"strings"
 )

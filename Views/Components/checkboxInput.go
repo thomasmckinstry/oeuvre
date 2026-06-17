@@ -6,7 +6,7 @@ import (
 	"charm.land/bubbles/v2/key"
 	"charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
-	"github.com/thomasmckinstry/MediaLogger-TUI/utils"
+	"github.com/thomasmckinstry/ouevre/utils"
 )
 
 type CheckboxModel struct {

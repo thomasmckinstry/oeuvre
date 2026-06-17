@@ -13,10 +13,10 @@ import (
 	_ "net/http/pprof"
 
 	tea "charm.land/bubbletea/v2"
-	"github.com/thomasmckinstry/MediaLogger-TUI/Views"
-	database "github.com/thomasmckinstry/MediaLogger-TUI/db"
-	"github.com/thomasmckinstry/MediaLogger-TUI/utils"
-	. "github.com/thomasmckinstry/MediaLogger-TUI/utils"
+	"github.com/thomasmckinstry/ouevre/Views"
+	database "github.com/thomasmckinstry/ouevre/db"
+	"github.com/thomasmckinstry/ouevre/utils"
+	. "github.com/thomasmckinstry/ouevre/utils"
 	"golang.org/x/term"
 )
 

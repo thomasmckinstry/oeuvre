@@ -7,10 +7,10 @@ import (
 	"charm.land/bubbles/v2/key"
 	"charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
-	"github.com/thomasmckinstry/MediaLogger-TUI/Views/Components"
-	database "github.com/thomasmckinstry/MediaLogger-TUI/db"
-	"github.com/thomasmckinstry/MediaLogger-TUI/utils"
-	. "github.com/thomasmckinstry/MediaLogger-TUI/utils"
+	"github.com/thomasmckinstry/ouevre/Views/Components"
+	database "github.com/thomasmckinstry/ouevre/db"
+	"github.com/thomasmckinstry/ouevre/utils"
+	. "github.com/thomasmckinstry/ouevre/utils"
 )
 
 type Form interface {

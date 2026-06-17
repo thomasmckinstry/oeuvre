@@ -4,9 +4,9 @@ import (
 	"charm.land/bubbles/v2/key"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
-	components "github.com/thomasmckinstry/MediaLogger-TUI/Views/Components"
-	partials "github.com/thomasmckinstry/MediaLogger-TUI/Views/Partials"
-	. "github.com/thomasmckinstry/MediaLogger-TUI/utils"
+	components "github.com/thomasmckinstry/ouevre/Views/Components"
+	partials "github.com/thomasmckinstry/ouevre/Views/Partials"
+	. "github.com/thomasmckinstry/ouevre/utils"
 
 	"log"
 	"os"
