@@ -1,12 +1,14 @@
 package views
 
 import (
+	"encoding/json"
+	"time"
+
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 	"github.com/thomasmckinstry/ouevre/Views/Partials"
 	database "github.com/thomasmckinstry/ouevre/db"
 	. "github.com/thomasmckinstry/ouevre/utils"
-	"time"
 )
 
 var addStyle lipgloss.Style = lipgloss.NewStyle().
@@ -77,7 +79,12 @@ func (m *AddModel) Update(msg tea.Msg) (*AddModel, tea.Cmd) {
 				 VALUES (?)
 				`)
 			CheckError("Failed to prepare insert statement: ", err)
-			for _, tag := range workMsg[TagsForm] {
+			var tags []string
+			err = json.Unmarshal([]byte(workMsg[TagsForm]), &tags)
+			CheckError("Failed to Unmarshal tags: ", err)
+			DebugLog("tags: ", tags)
+			for _, tag := range tags {
+				DebugLog("Adding tag to db: ", tag)
 				_, err = query.Exec(tag)
 			}
 			err = query.Close()

@@ -65,6 +65,8 @@ type TagInputModel struct {
 func (m *TagInputModel) Clear() {
 	m.Tags = []string{}
 	m.tagsCursor = 0
+	m.tagStart = 0
+	m.tagEnd = 0
 	m.textInput.Reset()
 }
 
@@ -184,7 +186,8 @@ func (m *TagInputModel) View() tea.View {
 		//c.X += 1 // Aligns it correctly with the text
 	}
 
-	s = lipgloss.JoinVertical(lipgloss.Left, s, m.textInput.View())
+	clipped := lipgloss.NewStyle().MaxWidth(m.width).Render(m.textInput.View())
+	s = lipgloss.JoinVertical(lipgloss.Left, s, clipped)
 
 	isFocused := m.selected && !m.textInput.Focused()
 
