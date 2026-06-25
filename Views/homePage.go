@@ -210,6 +210,7 @@ func (m *HomeModel) View() tea.View {
 		if formView.Cursor != nil {
 			c = formView.Cursor
 			c.Y += lipgloss.Height(s)
+			c.X += 1
 		}
 	}
 	sidebar := lipgloss.JoinVertical(lipgloss.Center, sidebarContent...)

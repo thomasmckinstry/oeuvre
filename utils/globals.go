@@ -85,7 +85,7 @@ func SetupMediums(db *sql.DB) {
 
 		err = row.Scan(&id, &name)
 		CheckError("Failed to scan row from media_type_table: ", err)
-		mediumName[id-1] = name
+		mediumName[id] = name
 		mediumInt[name] = id
 	}
 	DebugLog("Mediums: ", mediumName)

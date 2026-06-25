@@ -184,7 +184,6 @@ func (m *TagInputModel) View() tea.View {
 	s = lipgloss.PlaceHorizontal(m.width, lipgloss.Center, m.title)
 	if m.textInput.Focused() {
 		c.Y += lipgloss.Height(s)
-		c.X += 1 // Aligns it correctly with the text
 	}
 
 	clipped := lipgloss.NewStyle().MaxWidth(m.width + 1).Render(m.textInput.View())
