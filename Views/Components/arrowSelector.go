@@ -21,9 +21,7 @@ var defaultArrowMap = arrowInputKeyMap{
 
 var (
 	arrowContentStyle lipgloss.Style = lipgloss.NewStyle().
-				MarginTop(1)
-	arrowTextStyle lipgloss.Style = lipgloss.NewStyle().
-			Foreground(Unfocused)
+		MarginTop(1)
 )
 
 type ArrowModel struct {

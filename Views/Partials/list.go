@@ -3,7 +3,6 @@ package partials
 import (
 	"database/sql"
 	"encoding/json"
-	"log"
 
 	"charm.land/bubbles/v2/key"
 	"charm.land/bubbles/v2/table"
@@ -13,7 +12,6 @@ import (
 	. "github.com/thomasmckinstry/ouevre/utils"
 	"slices"
 	"sort"
-	"strconv"
 	"strings"
 )
 
@@ -38,8 +36,9 @@ type ListModel struct {
 	rows  []table.Row
 }
 
-func InitialList(width int, height int) ListModel {
+func (m *ListModel) refreshList() {
 	db = database.GetDB()
+
 	row, err := db.Query(`SELECT title, media_type, work_status, tags, year_released, work_id FROM works;`)
 	defer func() {
 		err = row.Close()
@@ -68,6 +67,11 @@ func InitialList(width int, height int) ListModel {
 		rows = append(rows, table.Row{title, GetTagsString(tagsArr), mediumsStr, Status_itos(intStatus), year, id})
 	}
 
+	m.table.SetRows(rows)
+	m.rows = rows
+}
+
+func InitialList(width int, height int) ListModel {
 	var columns = []table.Column{
 		{Title: "Title", Width: width / 4},
 		{Title: "Tags", Width: width / 3},
@@ -79,9 +83,8 @@ func InitialList(width int, height int) ListModel {
 
 	t := table.New(
 		table.WithColumns(columns),
-		table.WithRows(rows),
 		table.WithFocused(true),
-		table.WithHeight(height),
+		table.WithHeight(height-2),
 		table.WithWidth(width),
 	)
 	t.Blur()
@@ -98,10 +101,13 @@ func InitialList(width int, height int) ListModel {
 		Bold(false)
 	t.SetStyles(s)
 
-	return ListModel{
+	model := ListModel{
 		table: t,
-		rows:  rows,
 	}
+
+	model.refreshList()
+
+	return model
 }
 
 func (m ListModel) Init() tea.Cmd {
@@ -111,42 +117,12 @@ func (m ListModel) Init() tea.Cmd {
 func (m *ListModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
-	case DeleteWorkMsg:
-		DebugLog("Deleting work of ID: ", int(msg))
-		rows := m.table.Rows()
-		for i, row := range rows {
-			currId, _ := strconv.Atoi(row[Id])
-			DebugLog("Viewing row: ", currId)
-			if currId == int(msg) {
-				DebugLog("Deleting row: ", currId)
-				rows = append(rows[:i], rows[i+1:]...)
-				break
-			}
-		}
-		m.table.SetRows(rows)
-	case NewWorkMsg:
-		DebugLog("List got new work: ", []string(msg))
-		DebugLog("New work of length: ", len(msg))
-		newRow := []string(msg)
-		rows := m.table.Rows()
-		var mediumsArr []int
-		var tagsArr []string
-		err := json.Unmarshal([]byte(newRow[MediumForm]), &mediumsArr)
-		if err != nil {
-			log.Fatal("Failed to Unmarshal medium: ", err)
-		}
-		err = json.Unmarshal([]byte(newRow[TagsForm]), &tagsArr)
-		if err != nil {
-			log.Fatal("Failed to Unmarshal tags: ", err)
-		}
-		intStatus, _ := strconv.Atoi(newRow[StatusForm])
-		mediumsStr := ConvertMedium(mediumsArr)
-		rows = append(rows, table.Row{newRow[TitleForm], GetTagsString(tagsArr), mediumsStr, Status_itos(intStatus), newRow[YearForm], newRow[Id]})
-		m.table.SetRows(rows)
+	case DeleteWorkMsg, NewWorkMsg:
+		m.refreshList()
 	case tea.WindowSizeMsg:
 		width := msg.Width - 29
 		m.table.SetWidth(width)
-		m.table.SetHeight(msg.Height)
+		m.table.SetHeight(msg.Height - 2)
 		m.table.SetColumns([]table.Column{
 			{Title: "Title", Width: width / 4},
 			{Title: "Tags", Width: width / 3},

@@ -137,8 +137,8 @@ func (m *FilterModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
-		filterStyle = filterStyle.Height(msg.Height - (7))
-		m.height = msg.Height - 7
+		filterStyle = filterStyle.Height(msg.Height - (8))
+		m.height = msg.Height - 8
 	case tea.KeyMsg:
 		switch {
 		case key.Matches(msg, filterDefaultMap.Confirm):
@@ -205,7 +205,7 @@ func (m *FilterModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m *FilterModel) View() tea.View {
 	var c *tea.Cursor
 	//header:
-	s := headerStyle.Render(lipgloss.PlaceHorizontal(m.width, lipgloss.Center, m.headerText))
+	s := headerStyle.Render(lipgloss.PlaceHorizontal(m.width+4, lipgloss.Center, m.headerText)) // The +4 to m.width is arbitrary, not sure why it needs to be adjusted at all
 
 	for i, form := range m.forms {
 		s += "\n"
