@@ -41,12 +41,10 @@ var defaultTagMap = tagKeyMap{
 }
 
 var (
-	tagStyle lipgloss.Style = lipgloss.NewStyle().
-			Foreground(utils.Focused)
 	tagsStyle lipgloss.Style = lipgloss.NewStyle().
-			BorderStyle(lipgloss.NormalBorder()).
-			BorderForeground(Unfocused).
-			BorderTop(true)
+		BorderStyle(lipgloss.NormalBorder()).
+		BorderForeground(Unfocused).
+		BorderTop(true)
 )
 
 type TagInputModel struct {
@@ -168,6 +166,10 @@ func (m *TagInputModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						m.tagStart--
 					}
 				}
+
+				if len(m.Tags) < m.tagEnd-m.tagStart {
+					m.tagEnd--
+				}
 			}
 		default:
 			m.textInput, cmd = m.textInput.Update(msg) // Default to typing in the text input
@@ -203,7 +205,7 @@ func (m *TagInputModel) View() tea.View {
 		tagStr = lipgloss.PlaceHorizontal(m.width+2, lipgloss.Left, TruncateString(" - "+tag, m.width+2))
 		isFocused = index+m.tagStart == m.tagsCursor && !m.textInput.Focused() && m.selected
 		if isFocused && m.selected {
-			tagStr = tagStyle.Render(tagStr)
+			tagStr = lipgloss.NewStyle().Foreground(utils.Focused).Render(tagStr)
 		}
 
 		if index == 0 {
