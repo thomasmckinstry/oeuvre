@@ -26,8 +26,10 @@ type confirmKeyMap struct {
 }
 
 var defaultConfirmMap confirmKeyMap = confirmKeyMap{
-	Left:    key.NewBinding(key.WithKeys("H", "h", "left")),
-	Right:   key.NewBinding(key.WithKeys("L", "l", "right")),
+	Left: key.NewBinding(key.WithKeys("ctrl+h", "h", "left"),
+		key.WithHelp("ctrl+h /h/left", "Navigate left in confirm form.")),
+	Right: key.NewBinding(key.WithKeys("ctrl+l", "l", "right"),
+		key.WithHelp("ctrl+l /l/right", "Navigate right in confirm form.")),
 	Confirm: key.NewBinding(key.WithKeys("enter")),
 }
 

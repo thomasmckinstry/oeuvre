@@ -49,13 +49,16 @@ var (
 
 var filterDefaultMap = filterKeyMap{
 	Nav: key.NewBinding(
-		key.WithKeys("H", "K", "J", "L"),
+		key.WithKeys("ctrl+h", "ctrl+k", "ctrl+j", "ctrl+l"),
+		key.WithHelp("ctrl+h/j/k/l", "Navigate between forms in the filter."),
 	),
 	Down: key.NewBinding(
 		key.WithKeys("j", "down"),
+		key.WithHelp("ctrl+j/down", "Navigate down in a form."),
 	),
 	Up: key.NewBinding(
 		key.WithKeys("k", "up"),
+		key.WithHelp("ctrl+k/up", "Navigate up in a form."),
 	),
 	Confirm: key.NewBinding(
 		key.WithKeys("enter"),

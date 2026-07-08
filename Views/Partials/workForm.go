@@ -21,12 +21,12 @@ type WorkFormMap struct {
 
 var DefaultWorkFormKeyMap = WorkFormMap{
 	Up: key.NewBinding(
-		key.WithKeys("K", "k", "up"),
-		key.WithHelp("K/k/↑", "Move up between sections"),
+		key.WithKeys("ctrl+k", "k", "up"),
+		key.WithHelp("ctrl+k /k/↑", "Move up between sections"),
 	),
 	Down: key.NewBinding(
-		key.WithKeys("J", "j", "down"),
-		key.WithHelp("J/j/↓", "Move down between sections"),
+		key.WithKeys("ctrl+j", "j", "down"),
+		key.WithHelp("ctrl+j /j/↓", "Move down between sections"),
 	),
 	Focus: key.NewBinding(
 		key.WithKeys("enter"),

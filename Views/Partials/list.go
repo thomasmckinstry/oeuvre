@@ -26,7 +26,8 @@ type listKeyMap struct {
 type SortMsg int
 
 var defaultListMap = listKeyMap{
-	Nav:     key.NewBinding(key.WithKeys("H", "L")),
+	Nav: key.NewBinding(key.WithKeys("ctrl+h", "ctrl+l"),
+		key.WithHelp("ctrl+h/l", "Navigate in/out of the list")),
 	Focus:   key.NewBinding(key.WithKeys("esc")),
 	Confirm: key.NewBinding(key.WithKeys("enter")),
 }
@@ -120,7 +121,7 @@ func (m *ListModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case DeleteWorkMsg, NewWorkMsg:
 		m.refreshList()
 	case tea.WindowSizeMsg:
-		width := msg.Width - 29
+		width := msg.Width - 21
 		m.table.SetWidth(width)
 		m.table.SetHeight(msg.Height - 2)
 		m.table.SetColumns([]table.Column{

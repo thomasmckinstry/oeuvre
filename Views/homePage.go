@@ -36,20 +36,20 @@ type homeKeyMap struct {
 
 var defaultHomeKeyMap = homeKeyMap{
 	TopLevelUp: key.NewBinding(
-		key.WithKeys("K"),
-		key.WithHelp("K", "Move up between sections"),
+		key.WithKeys("ctrl+k"),
+		key.WithHelp("ctrl+k", "Move up between sections"),
 	),
 	TopLevelDown: key.NewBinding(
-		key.WithKeys("J"),
-		key.WithHelp("J", "Move down between sections"),
+		key.WithKeys("ctrl+j"),
+		key.WithHelp("ctrl+j", "Move down between sections"),
 	),
 	TopLevelLeft: key.NewBinding(
-		key.WithKeys("H"),
-		key.WithHelp("H", "Move left between sections"),
+		key.WithKeys("ctrl+h"),
+		key.WithHelp("ctrl+h", "Move left between sections"),
 	),
 	TopLevelRight: key.NewBinding(
-		key.WithKeys("L"),
-		key.WithHelp("L", "Move right between sections"),
+		key.WithKeys("ctrl+l"),
+		key.WithHelp("ctrl+l", "Move right between sections"),
 	),
 	SidebarNav: key.NewBinding(
 		key.WithKeys("k", "up", "j", "down"),

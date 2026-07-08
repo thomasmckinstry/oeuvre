@@ -19,8 +19,8 @@ type addKeyMap struct {
 
 var defaultAddKey = addKeyMap{
 	Nav: key.NewBinding(
-		key.WithKeys("J", "H", "K", "L"),
-		key.WithHelp("H/J/K/L", "Navigate away from add"),
+		key.WithKeys("ctrl+j", "ctrl+h", "ctrl+k", "ctrl+l"),
+		key.WithHelp("ctrl+h/j/k/l", "Navigate away from add"),
 	),
 }
 

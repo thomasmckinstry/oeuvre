@@ -14,9 +14,12 @@ type arrowInputKeyMap struct {
 }
 
 var defaultArrowMap = arrowInputKeyMap{
-	Nav:   key.NewBinding(key.WithKeys("H", "J", "K", "L")),
-	Left:  key.NewBinding(key.WithKeys("h", "left")),
-	Right: key.NewBinding(key.WithKeys("l", "right")),
+	Nav: key.NewBinding(key.WithKeys("ctrl+h", "ctrl+j", "ctrl+k", "ctrl+l"),
+		key.WithHelp("ctrl+h/j/k/l", "Navigate in/out of arrow input.")),
+	Left: key.NewBinding(key.WithKeys("h", "left"),
+		key.WithHelp("h/left", "Navigate left in arrow input.")),
+	Right: key.NewBinding(key.WithKeys("l", "right"),
+		key.WithHelp("l/right", "Navigate right in arrow input.")),
 }
 
 var (

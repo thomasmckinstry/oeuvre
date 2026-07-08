@@ -106,16 +106,26 @@ const (
 var writeHeader = []string{"NOTE", "REVIEW"}
 
 var defaultWorkMap = workKeyMap{
-	TopLevelUp:    key.NewBinding(key.WithKeys("K")),
-	TopLevelDown:  key.NewBinding(key.WithKeys("J")),
-	TopLevelLeft:  key.NewBinding(key.WithKeys("H")),
-	TopLevelRight: key.NewBinding(key.WithKeys("L")),
-	Left:          key.NewBinding(key.WithKeys("h", "left")),
-	Right:         key.NewBinding(key.WithKeys("l", "right")),
-	Up:            key.NewBinding(key.WithKeys("k", "up")),
-	Down:          key.NewBinding(key.WithKeys("j", "down")),
-	Confirm:       key.NewBinding(key.WithKeys("enter")),
-	Exit:          key.NewBinding(key.WithKeys("esc")),
+	TopLevelUp: key.NewBinding(key.WithKeys("ctrl+k"),
+		key.WithHelp("ctrl+k", "Navigate up between forms.")),
+	TopLevelDown: key.NewBinding(key.WithKeys("ctrl+j"),
+		key.WithHelp("ctrl+j", "Navigate down between forms.")),
+	TopLevelLeft: key.NewBinding(key.WithKeys("ctrl+h"),
+		key.WithHelp("ctrl+h", "Navigate left between forms.")),
+	TopLevelRight: key.NewBinding(key.WithKeys("ctrl+l"),
+		key.WithHelp("ctrl+l", "Navigate right between forms.")),
+	Left: key.NewBinding(key.WithKeys("h", "left"),
+		key.WithHelp("h/left", "Navigate left within a form.")),
+	Right: key.NewBinding(key.WithKeys("l", "right"),
+		key.WithHelp("l/right", "Navigate right within a form.")),
+	Up: key.NewBinding(key.WithKeys("k", "up"),
+		key.WithHelp("k/up", "Navigate up within a form.")),
+	Down: key.NewBinding(key.WithKeys("j", "down"),
+		key.WithHelp("j/down", "Navigate down within a form.")),
+	Confirm: key.NewBinding(key.WithKeys("enter"),
+		key.WithHelp("enter", "Confirm an input.")),
+	Exit: key.NewBinding(key.WithKeys("esc"),
+		key.WithHelp("esc", "Exit or cancel an input.")),
 }
 
 func (m *WorkPageModel) resetCursors() {
