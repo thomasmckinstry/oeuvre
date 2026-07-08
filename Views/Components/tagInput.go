@@ -159,15 +159,13 @@ func (m *TagInputModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, defaultTagMap.Delete):
 			if len(m.Tags) > 0 && !m.textInput.Focused() {
 				m.Tags = append(m.Tags[:m.tagsCursor], m.Tags[m.tagsCursor+1:]...)
-				if m.tagsCursor >= len(m.Tags) {
+				if m.tagsCursor > 0 {
 					m.tagsCursor--
-					m.tagEnd--
-					if m.tagStart > 0 {
-						m.tagStart--
-					}
 				}
-
-				if len(m.Tags) < m.tagEnd-m.tagStart {
+				if m.tagStart > 0 && m.tagEnd+m.tagStart > len(m.Tags) {
+					m.tagStart--
+					m.tagEnd--
+				} else if m.tagEnd > len(m.Tags) {
 					m.tagEnd--
 				}
 			}
