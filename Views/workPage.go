@@ -347,7 +347,7 @@ func (m *WorkPageModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					VALUES (?, ?, ?, ?, ?, ?, ?)
 				`)
 					CheckError("Failed to prepare insert statement: ", err)
-					statusInt := int(workMsg[StatusForm][0])
+					statusInt, err := strconv.Atoi(workMsg[StatusForm])
 					CheckError("Failed to convert string to int: ", err)
 					_, err = query.Exec(date, workMsg[TitleForm], workMsg[MediumForm], statusInt, workMsg[TagsForm], workMsg[YearForm], m.currWorkId)
 					CheckError("Failed to insert to works table: ", err)
@@ -380,7 +380,7 @@ func (m *WorkPageModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					if ok && m.focused {
 						cmd = nil
 						m.focused = false
-					} else {
+					} else if !m.focused {
 						m.work.ClearComponents()
 					}
 				}

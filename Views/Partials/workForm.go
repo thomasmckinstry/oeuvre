@@ -124,7 +124,7 @@ func (m *WorkFormModel) Update(msg tea.Msg) (*WorkFormModel, tea.Cmd) {
 					form.Textinput.SetValue(details[Released])
 				}
 			case *components.TagInputModel:
-				form.Tags = strings.Split(details[Tags], ", ")
+				form.SetTags(strings.Split(details[Tags], ", "))
 			case *components.CheckboxModel:
 				for entry := range strings.SplitSeq(details[Medium], ", ") {
 					for i, formEntry := range form.Entries {

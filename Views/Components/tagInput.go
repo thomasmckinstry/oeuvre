@@ -61,6 +61,11 @@ type TagInputModel struct {
 	errorMsg string
 }
 
+func (m *TagInputModel) SetTags(tags []string) {
+	m.Tags = tags
+	m.tagEnd = min(len(tags), m.tagCnt)
+}
+
 func (m *TagInputModel) Clear() {
 	m.Tags = []string{}
 	m.tagsCursor = 0
@@ -90,7 +95,7 @@ func InitialInput(tagCnt int, placeholder string, title string, width int, selec
 		textInput:  input,
 		tagsCursor: 0,
 		title:      title,
-		tagCnt:     tagCnt,
+		tagCnt:     tagCnt, // Number of tags to be displayed at one time
 		selected:   selected,
 		width:      width,
 	}
