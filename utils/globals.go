@@ -69,7 +69,7 @@ func SetupStatuses(db *sql.DB) {
 		err = row.Scan(&id, &name)
 		CheckError("Failed to scan row from status_table: ", err)
 		statusName[id-1] = name
-		statusInt[name] = id
+		statusInt[name] = id - 1
 	}
 	DebugLog("Statuses: ", statusName)
 }
