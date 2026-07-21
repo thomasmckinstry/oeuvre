@@ -18,11 +18,12 @@ type Form interface {
 }
 
 type filterKeyMap struct {
-	Nav     key.Binding
-	Up      key.Binding
-	Down    key.Binding
-	Confirm key.Binding
-	Unfocus key.Binding
+	Nav         key.Binding
+	Up          key.Binding
+	Down        key.Binding
+	TopLevelNav key.Binding
+	Confirm     key.Binding
+	Unfocus     key.Binding
 }
 
 const (
@@ -199,7 +200,9 @@ func (m *FilterModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			cmds = tea.Batch(cmds, cmd)
 			fallthrough
 		default:
-			_, cmd = m.forms[m.cursor].Update(msg)
+			if m.cursor < len(m.forms) {
+				_, cmd = m.forms[m.cursor].Update(msg)
+			}
 		}
 	}
 	return m, cmds
